@@ -1,0 +1,8 @@
+Flask~=3.1.0
+Flask-SQLAlchemy
+Flask-WTF
+Flask-Login
+Flask-Migrate
+psycopg2
+Flask-Bcrypt
+werkzeug
