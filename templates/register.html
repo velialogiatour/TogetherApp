@@ -4,18 +4,34 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Регистрация</title>
-    <link rel="stylesheet" href="../static/css/register.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/register.css') }}">
 </head>
 <body>
     <div class="container">
         <h2>Регистрация</h2>
-        <form id="registrationForm">
-            <input type="text" id="name" placeholder="Введите имя" required>
-            <input type="email" id="email" placeholder="Введите email" required>
-            <input type="password" id="password" placeholder="Введите пароль" required>
-            <button type="submit">Зарегистрироваться</button>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash {{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST">
+            {{ form.hidden_tag() }}
+
+            <label for="name">{{ form.name.label }}</label>
+            {{ form.name(class="form-control", placeholder="Введите имя") }}
+
+            <label for="email">{{ form.email.label }}</label>
+            {{ form.email(class="form-control", placeholder="Введите email") }}
+
+            <label for="password">{{ form.password.label }}</label>
+            {{ form.password(class="form-control", placeholder="Введите пароль") }}
+
+            {{ form.submit(class="btn") }}
         </form>
     </div>
-    <script src="../static/js/register.js"></script>
 </body>
 </html>

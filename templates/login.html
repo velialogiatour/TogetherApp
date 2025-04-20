@@ -4,27 +4,37 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Авторизация</title>
-    <link rel="stylesheet" href="../static/css/login.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
 </head>
 <body>
     <div class="login-container">
         <h2>Вход в приложение</h2>
-        <form id="login-form">
-            <label for="email">Email</label>
-            <input type="email" id="email" name="email" required>
 
-            <label for="password">Пароль</label>
-            <input type="password" id="password" name="password" required>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash {{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST">
+            {{ form.hidden_tag() }}
+
+            <label for="email">{{ form.email.label }}</label>
+            {{ form.email(class="form-control") }}
+
+            <label for="password">{{ form.password.label }}</label>
+            {{ form.password(class="form-control") }}
 
             <div class="remember-me">
-                <input type="checkbox" id="remember" name="remember">
-                <label for="remember">Запомнить меня</label>
+                {{ form.remember() }} {{ form.remember.label }}
             </div>
 
-            <button type="submit">Войти</button>
+            {{ form.submit(class="btn") }}
         </form>
-        <a href="forgot_pass.html" class="forgot-password">Забыли пароль?</a>
+
+        <a href="{{ url_for('forgot_pass') }}" class="forgot-password">Забыли пароль?</a>
     </div>
-    <script src="../static/js/login.js"></script>
 </body>
 </html>

@@ -1,37 +1,32 @@
 document.addEventListener("DOMContentLoaded", function () {
-    const loginForm = document.getElementById("login-form");
+    const form = document.querySelector("form");
 
-    loginForm.addEventListener("submit", async function (event) {
+    form.addEventListener("submit", async function (event) {
         event.preventDefault();
 
-        const email = document.getElementById("email").value;
-        const password = document.getElementById("password").value;
-        const rememberMe = document.getElementById("remember").checked;
+        const formData = new FormData(form);
+        const jsonData = Object.fromEntries(formData.entries());
 
-        if (email && password) {
-            try {
-                const response = await fetch("/api/login", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({ email, password, rememberMe })
-                });
+        try {
+            const response = await fetch("/login", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-Token": formData.get("csrf_token")
+                },
+                body: JSON.stringify(jsonData)
+            });
 
-                const data = await response.json();
-
-                if (response.ok) {
-                    alert("Вход выполнен успешно!");
-                    window.location.href = "/basepage";
-                } else {
-                    alert("Ошибка: " + data.message);
-                }
-            } catch (error) {
-                alert("Произошла ошибка при отправке данных на сервер.");
-                console.error("Ошибка:", error);
+            const result = await response.json();
+            if (response.ok) {
+                alert("Вход успешен!");
+                window.location.href = "/basepage";
+            } else {
+                alert("Ошибка: " + result.message);
             }
-        } else {
-            alert("Пожалуйста, введите email и пароль.");
+        } catch (error) {
+            console.error("Ошибка запроса:", error);
+            alert("Ошибка сети. Попробуйте снова.");
         }
     });
 });

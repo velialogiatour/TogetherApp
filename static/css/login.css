@@ -9,51 +9,85 @@ body {
 }
 
 .login-container {
-    background: #f9f9f9;
-    padding: 20px;
+    background: #f0f0f0;
+    padding: 25px;
     border-radius: 10px;
-    box-shadow: 0 0 18px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     text-align: center;
-    width: 300px;
+    width: 320px;
 }
 
 h2 {
-    margin-bottom: 25px;
+    margin-bottom: 20px;
+    font-size: 1.8em;
+    color: #333;
+}
+
+.flash {
+    padding: 10px;
+    margin-bottom: 15px;
+    border-radius: 5px;
+    font-size: 0.9em;
+}
+
+.flash.success {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.flash.error {
+    background-color: #f8d7da;
+    color: #721c24;
 }
 
 label {
     display: block;
     text-align: left;
     margin-top: 10px;
+    font-size: 1em;
+    color: #333;
 }
 
-input[type="email"],
-input[type="password"] {
+.form-control {
     width: 95%;
     padding: 10px;
-    margin-top: 10px;
-    border: 2px solid #ccc;
-    border-radius: 10px;
+    margin-top: 5px;
+    border: 3px solid #ccc;
+    border-radius: 20px;
+    font-size: 1em;
+    transition: border-color 0.3s ease-in-out;
+}
+
+.form-control:focus {
+    border-color: #007bff;
+    outline: none;
 }
 
 .remember-me {
     display: flex;
-    align-items: baseline;
+    align-items: center;
     margin-top: 10px;
+    font-size: 0.9em;
 }
 
-button {
-    width: 100%;
-    padding: 11px;
-    background: #070101;
+.remember-me input {
+    margin-right: 5px;
+}
+
+.btn {
+    width: 90%;
+    padding: 12px;
+    background-color: black;
     color: white;
     border: none;
     border-radius: 20px;
-    margin-top: 20px;
+    font-size: 1.1em;
     cursor: pointer;
+    transition: background 0.3s ease-in-out;
+    margin-top: 15px;
 }
 
-button:hover {
+.btn:hover {
     background: #0056b3;
 }
 
@@ -62,6 +96,7 @@ button:hover {
     margin-top: 15px;
     color: #007bff;
     text-decoration: none;
+    font-size: 0.9em;
 }
 
 .forgot-password:hover {

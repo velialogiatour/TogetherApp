@@ -1,37 +1,81 @@
 body {
     font-family: Arial, sans-serif;
-    background-color: white;
+    background-color: #ffffff;
     display: flex;
     justify-content: center;
     align-items: center;
     height: 100vh;
     margin: 0;
 }
+
 .container {
-    width: 300px;
-    padding: 60px;
+    background: #f0f0f0;
+    padding: 25px;
     border-radius: 20px;
-    box-shadow: 0 0 18px rgba(0, 0, 0, 0.1);
-    background-color: #f9f9f9;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     text-align: center;
+    width: 350px;
 }
-input {
-    width: 100%;
+
+h2 {
+    margin-bottom: 20px;
+    font-size: 1.8em;
+    color: #333;
+}
+
+.flash {
     padding: 10px;
-    margin: 11px 0;
-    border: 3px solid #ccc;
-    border-radius: 15px;
+    margin-bottom: 15px;
+    border-radius: 5px;
+    font-size: 0.9em;
 }
-button {
-    width: 105%;
+
+.flash.success {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.flash.error {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+label {
+    display: block;
+    text-align: left;
+    margin-top: 10px;
+    font-size: 1em;
+    color: #333;
+}
+
+.form-control {
+    width: 95%;
+    padding: 10px;
+    margin-top: 5px;
+    border: 3px solid #ccc;
+    border-radius: 20px;
+    font-size: 1em;
+    transition: border-color 0.3s ease-in-out;
+}
+
+.form-control:focus {
+    border-color: #007bff;
+    outline: none;
+}
+
+.btn {
+    width: 90%;
     padding: 12px;
-    margin: 2px;
     background-color: black;
     color: white;
     border: none;
     border-radius: 20px;
+    font-size: 1.1em;
     cursor: pointer;
+    transition: background 0.3s ease-in-out;
+    margin-top: 25px;
 }
-button:hover {
+
+.btn:hover {
     background: #0056b3;
 }
