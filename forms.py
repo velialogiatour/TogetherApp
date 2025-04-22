@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, BooleanField
-from wtforms.validators import DataRequired, Length, Email, ValidationError
+from wtforms.validators import DataRequired, Length, Email, ValidationError, EqualTo
 from models import User
 
 
@@ -25,6 +25,25 @@ class LoginForm(FlaskForm):
         user = User.query.filter_by(email=field.data).first()
         if not user:
             raise ValidationError("Этот email не зарегистрирован.")
+
+
+class ForgotPasswordForm(FlaskForm):
+    email = StringField('Email', validators=[DataRequired(), Email()])
+    submit = SubmitField('Отправить ссылку для восстановления')
+
+
+class ResetPasswordForm(FlaskForm):
+    password = PasswordField('Новый пароль', validators=[
+        DataRequired(message="Введите новый пароль"),
+        Length(min=8, message="Пароль должен содержать минимум 8 символов")
+    ])
+
+    confirm_password = PasswordField('Подтвердите пароль', validators=[
+        DataRequired(message="Повторите пароль"),
+        EqualTo('password', message="Пароли не совпадают")
+    ])
+
+    submit = SubmitField('Изменить пароль')
 
 class QuestionForm(FlaskForm):
     pass
