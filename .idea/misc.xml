@@ -6,4 +6,5 @@
   <component name="JavaScriptSettings">
     <option name="languageLevel" value="FLOW" />
   </component>
+  <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.11 (TogetherApp)" project-jdk-type="Python SDK" />
 </project>

@@ -1,0 +1,75 @@
+body {
+    background-color: #ffffff;
+    font-family: Arial, sans-serif;
+    color: #000000;
+    margin: 0;
+    padding: 0;
+}
+
+.likes-page {
+    max-width: 960px;
+    margin: 40px auto;
+    padding: 20px;
+}
+
+h1 {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+/* Вкладки */
+.tab-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.tab-btn {
+    padding: 10px 20px;
+    border: none;
+    background-color: #f0f0f0;
+    color: #000000;
+    cursor: pointer;
+    font-weight: bold;
+    border-radius: 6px;
+    transition: background-color 0.2s;
+}
+
+.tab-btn.active {
+    background-color: #cccccc;
+}
+
+/* Контент вкладок */
+.tab-panel {
+    display: none;
+}
+
+.tab-panel.active {
+    display: block;
+}
+
+/* Карточки */
+.like-card {
+    border-bottom: 1px solid #ddd;
+    padding: 10px 0;
+}
+
+.like-card:last-child {
+    border-bottom: none;
+}
+
+.like-card p {
+    margin: 0;
+    font-weight: bold;
+}
+
+.like-card a {
+    text-decoration: none;
+    color: #333;
+    font-size: 0.9em;
+}
+
+.like-card a:hover {
+    text-decoration: underline;
+}

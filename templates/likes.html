@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Мои лайки</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/likes.css') }}">
+</head>
+<body>
+<div class="likes-page">
+    <h1>Мои лайки</h1>
+
+    <!-- Вкладки -->
+    <div class="tab-buttons">
+        <button class="tab-btn active" data-tab="liked">Я лайкнул</button>
+        <button class="tab-btn" data-tab="likedme">Меня лайкнули</button>
+        <button class="tab-btn" data-tab="matches">Совпадения</button>
+    </div>
+
+    <!-- Контент вкладок -->
+    <div class="tab-content">
+
+        <div class="tab-panel active" id="tab-liked">
+            {% if liked_users %}
+                {% for user in liked_users %}
+                    <div class="like-card">
+                        <p>{{ user.name }}</p>
+                        <a href="{{ url_for('view_profile', user_id=user.id) }}">Смотреть профиль</a>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p>Вы ещё никому не поставили лайк.</p>
+            {% endif %}
+        </div>
+
+        <div class="tab-panel" id="tab-likedme">
+            {% if users_who_liked_me %}
+                {% for user in users_who_liked_me %}
+                    <div class="like-card">
+                        <p>{{ user.name }}</p>
+                        <a href="{{ url_for('view_profile', user_id=user.id) }}">Смотреть профиль</a>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p>Вас ещё никто не лайкнул.</p>
+            {% endif %}
+        </div>
+
+        <div class="tab-panel" id="tab-matches">
+            {% if matches %}
+                {% for user in matches %}
+                    <div class="like-card">
+                        <p>{{ user.name }}</p>
+                        <a href="{{ url_for('view_profile', user_id=user.id) }}">Смотреть профиль</a>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p>У вас пока нет совпадений.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/likes.js') }}"></script>
+</body>
+</html>
+

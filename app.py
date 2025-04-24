@@ -1,10 +1,10 @@
 from datetime import datetime, timedelta, timezone
 
-from flask import Flask, render_template, redirect, url_for, flash, session
+from flask import Flask, render_template, redirect, url_for, flash, session, request
 from flask_wtf import CSRFProtect
 from werkzeug.security import generate_password_hash, check_password_hash
 from forms import RegisterForm, LoginForm, ForgotPasswordForm, ResetPasswordForm
-from models import db, User, PasswordResetToken
+from models import db, User, PasswordResetToken, Like
 from config import Connect
 from flask_mail import Message, Mail
 import secrets
@@ -129,6 +129,56 @@ def questionary():
 def basepage():
     return render_template('basepage.html')
 
+@app.route('/like/<int:liked_user_id>', methods=['POST'])
+def like_user(liked_user_id):
+    if 'user_id' not in session:
+        flash("Сначала войдите в аккаунт", "warning")
+        return redirect(url_for('login'))
+
+    user_id = session['user_id']
+    if user_id == liked_user_id:
+        flash("Нельзя лайкнуть себя :)", "info")
+        return redirect(request.referrer or url_for('basepage'))
+
+    existing_like = Like.query.filter_by(user_id=user_id, liked_user_id=liked_user_id).first()
+    if existing_like:
+        db.session.delete(existing_like)
+        db.session.commit()
+        flash("Лайк удалён", "info")
+    else:
+        new_like = Like(user_id=user_id, liked_user_id=liked_user_id)
+        db.session.add(new_like)
+        db.session.commit()
+        flash("Вы поставили лайк!", "success")
+
+    return redirect(request.referrer or url_for('basepage'))
+
+
+@app.route('/likes')
+def likes_page():
+    if 'user_id' not in session:
+        flash("Сначала войдите в аккаунт", "warning")
+        return redirect(url_for('login'))
+
+    user_id = session['user_id']
+
+    # Лайки, которые я поставил
+    liked_users = User.query.join(Like, User.id == Like.liked_user_id)\
+        .filter(Like.user_id == user_id).all()
+
+    # Лайки, которые получил
+    users_who_liked_me = User.query.join(Like, User.id == Like.user_id)\
+        .filter(Like.liked_user_id == user_id).all()
+
+    # Взаимные лайки (матчи)
+    matches = [u for u in liked_users if u in users_who_liked_me]
+
+    return render_template(
+        "likes.html",
+        liked_users=liked_users,
+        users_who_liked_me=users_who_liked_me,
+        matches=matches
+    )
 
 @app.route('/user_profile/<int:id>', methods=['GET', 'POST'])
 def user_profile():
