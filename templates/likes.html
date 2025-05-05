@@ -6,7 +6,13 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/likes.css') }}">
 </head>
 <body>
+
 <div class="likes-page">
+    <!-- Чёрная стрелка назад -->
+    <div class="back-button">
+        <a href="{{ url_for('basepage') }}">&#8592;</a>
+    </div>
+
     <h1>Мои лайки</h1>
 
     <!-- Вкладки -->
@@ -28,7 +34,7 @@
                     </div>
                 {% endfor %}
             {% else %}
-                <p>Вы ещё никому не поставили лайк.</p>
+                <p class="empty-message">Вы ещё никому не поставили лайк.</p>
             {% endif %}
         </div>
 
@@ -41,7 +47,7 @@
                     </div>
                 {% endfor %}
             {% else %}
-                <p>Вас ещё никто не лайкнул.</p>
+                <p class="empty-message">Вас ещё никто не лайкнул.</p>
             {% endif %}
         </div>
 
@@ -54,13 +60,15 @@
                     </div>
                 {% endfor %}
             {% else %}
-                <p>У вас пока нет совпадений.</p>
+                <p class="empty-message">У вас пока нет совпадений.</p>
             {% endif %}
         </div>
+
     </div>
 </div>
 
 <script src="{{ url_for('static', filename='js/likes.js') }}"></script>
 </body>
 </html>
+
 
