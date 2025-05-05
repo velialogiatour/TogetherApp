@@ -11,7 +11,7 @@ body {
 .login-container {
     background: #f0f0f0;
     padding: 25px;
-    border-radius: 10px;
+    border-radius: 20px;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     text-align: center;
     width: 320px;
@@ -21,23 +21,6 @@ h2 {
     margin-bottom: 20px;
     font-size: 1.8em;
     color: #333;
-}
-
-.flash {
-    padding: 10px;
-    margin-bottom: 15px;
-    border-radius: 5px;
-    font-size: 0.9em;
-}
-
-.flash.success {
-    background-color: #d4edda;
-    color: #155724;
-}
-
-.flash.error {
-    background-color: #f8d7da;
-    color: #721c24;
 }
 
 label {
@@ -65,7 +48,7 @@ label {
 
 .remember-me {
     display: flex;
-    align-items: center;
+    align-items: baseline;
     margin-top: 10px;
     font-size: 0.9em;
 }
@@ -102,3 +85,79 @@ label {
 .forgot-password:hover {
     text-decoration: underline;
 }
+
+/* Стрелка назад */
+.back-button {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    font-size: 28px;
+    color: black;
+    text-decoration: none;
+    z-index: 1000;
+}
+
+.back-button a {
+    color: black;
+    text-decoration: none;
+}
+
+/* Flash сообщения */
+.flash {
+    width: 90%;
+    margin: 15px auto;
+    padding: 12px;
+    border-radius: 10px;
+    font-size: 0.95em;
+    text-align: center;
+    animation: fadeOut 0.5s ease forwards;
+    animation-delay: 3s;
+}
+
+.flash.success {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.flash.error {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+/* Ошибки в форме */
+#errorBox {
+    margin: 10px auto;
+    width: 90%;
+}
+
+.error-message {
+    background-color: #f8d7da;
+    color: #721c24;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 0.95em;
+    margin-bottom: 15px;
+    animation: fadeIn 0.5s ease;
+}
+
+/* Плавное появление ошибки */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Анимация исчезновения */
+@keyframes fadeOut {
+    to {
+        opacity: 0;
+        transform: translateY(-20px);
+        visibility: hidden;
+    }
+}
+

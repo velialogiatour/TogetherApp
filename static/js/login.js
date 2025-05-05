@@ -1,5 +1,6 @@
 document.addEventListener("DOMContentLoaded", function () {
-    const form = document.querySelector("form");
+    const form = document.getElementById("loginForm");
+    const errorBox = document.getElementById("errorBox");
 
     form.addEventListener("submit", async function (event) {
         event.preventDefault();
@@ -18,15 +19,17 @@ document.addEventListener("DOMContentLoaded", function () {
             });
 
             const result = await response.json();
-            if (response.ok) {
-                alert("Вход успешен!");
+            if (response.ok && result.success) {
                 window.location.href = "/basepage";
             } else {
-                alert("Ошибка: " + result.message);
+                errorBox.innerHTML = `<div class="error-message">${result.message || "Ошибка входа"}</div>`;
             }
         } catch (error) {
             console.error("Ошибка запроса:", error);
-            alert("Ошибка сети. Попробуйте снова.");
+            errorBox.innerHTML = `<div class="error-message">Ошибка сети. Попробуйте снова.</div>`;
         }
     });
 });
+
+
+

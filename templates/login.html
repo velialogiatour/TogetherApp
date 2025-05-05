@@ -7,34 +7,49 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
 </head>
 <body>
+
+    <!-- Стрелка назад -->
+    <div class="back-button">
+        <a href="{{ url_for('index') }}">&#8592;</a>
+    </div>
+
     <div class="login-container">
-        <h2>Вход в приложение</h2>
+        <h2>Вход в Together</h2>
 
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="flash {{ category }}">{{ message }}</div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
+        <!-- Место для ошибок -->
+        <div id="errorBox"></div>
 
-        <form method="POST">
+        <!-- flash сообщения -->
+        <div class="flash-messages">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="flash {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
+
+        <form id="loginForm">
             {{ form.hidden_tag() }}
 
             <label for="email">{{ form.email.label }}</label>
-            {{ form.email(class="form-control") }}
+            {{ form.email(class="form-control", placeholder="Введите email") }}
 
             <label for="password">{{ form.password.label }}</label>
-            {{ form.password(class="form-control") }}
+            {{ form.password(class="form-control", placeholder="Введите пароль") }}
 
             <div class="remember-me">
                 {{ form.remember() }} {{ form.remember.label }}
             </div>
 
-            {{ form.submit(class="btn") }}
+            {{ form.submit(class="btn", value="Войти") }}
         </form>
 
         <a href="{{ url_for('forgot_pass') }}" class="forgot-password">Забыли пароль?</a>
     </div>
+
+    <script src="{{ url_for('static', filename='js/login.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/flash.js') }}"></script>
 </body>
 </html>
