@@ -1,10 +1,63 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <title>Ваша анкета</title>
+  <meta charset="UTF-8">
+  <title>Создание анкеты</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/questionary.css') }}">
 </head>
 <body>
 
+  <!-- Блок для flash-сообщений -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        <div id="flashMessage" class="flash-message {{ category }}">
+          {{ message }}
+        </div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  <div class="container">
+    <h1>Создайте свою анкету</h1>
+    <form method="POST" enctype="multipart/form-data" class="questionary-form">
+      {{ form.hidden_tag() }}
+
+      <!-- Фото профиля -->
+      <div class="photo-upload">
+        <label for="profilePhotoInput" class="profile-photo-preview" id="profilePreview">
+          +
+        </label>
+        {{ form.profile_photo(id="profilePhotoInput") }}
+      </div>
+
+      <!-- Остальные поля -->
+      <div class="form-group">{{ form.age.label }}{{ form.age(class="input") }}</div>
+      <div class="form-group">{{ form.gender.label }}{{ form.gender(class="input") }}</div>
+      <div class="form-group">{{ form.country.label }}{{ form.country(class="input") }}</div>
+      <div class="form-group">{{ form.city.label }}{{ form.city(class="input") }}</div>
+      <div class="form-group">{{ form.height.label }}{{ form.height(class="input") }}</div>
+      <div class="form-group">{{ form.zodiac_sign.label }}{{ form.zodiac_sign(class="input") }}</div>
+      <div class="form-group">{{ form.interests.label }}{{ form.interests(class="textarea") }}</div>
+      <div class="form-group">{{ form.description.label }}{{ form.description(class="textarea") }}</div>
+
+      <!-- Кнопка "Добавить дополнительные фото" -->
+      <div class="form-group centered-button">
+        <label class="additional-photos-button">
+          Добавить дополнительные фото
+          {{ form.additional_photos(style="display:none") }}
+        </label>
+      </div>
+
+      <!-- Кнопка "Создать анкету" -->
+      <div class="form-group centered-button">
+        {{ form.submit(class="submit-btn") }}
+      </div>
+
+    </form>
+  </div>
+
+  <script src="{{ url_for('static', filename='js/questionary.js') }}"></script>
 </body>
 </html>
