@@ -7,18 +7,19 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/register.css') }}">
 </head>
 <body>
+
+    <!-- Стрелка назад -->
+    <div class="back-button">
+        <a href="{{ url_for('index') }}">&#8592;</a>
+    </div>
+
     <div class="container">
         <h2>Регистрация</h2>
 
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="flash {{ category }}">{{ message }}</div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
+        <!-- Блок для ошибок -->
+        <div id="errorBox"></div>
 
-        <form method="POST">
+        <form id="registerForm" method="POST">
             {{ form.hidden_tag() }}
 
             <label for="name">{{ form.name.label }}</label>
@@ -30,8 +31,11 @@
             <label for="password">{{ form.password.label }}</label>
             {{ form.password(class="form-control", placeholder="Введите пароль") }}
 
-            {{ form.submit(class="btn") }}
+            {{ form.submit(class="btn", value="Зарегистрироваться") }}
         </form>
     </div>
+
+    <script src="{{ url_for('static', filename='js/register.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/flash.js') }}"></script>
 </body>
 </html>
