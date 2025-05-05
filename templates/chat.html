@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Чат с {{ other_user.name }}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/chat.css') }}">
+</head>
+<body>
+
+  <!-- Стрелка назад -->
+  <div class="back-button">
+    <a href="{{ url_for('chats') }}">&#8592;</a>
+  </div>
+
+  <div class="chat-container">
+    <div class="messages" id="messages"></div>
+
+    <div id="errorBox"></div>
+
+    <form class="input-area" id="messageForm">
+      {% if other_user %}
+        <input type="hidden" id="receiver_id" value="{{ other_user.id }}">
+      {% endif %}
+      <label for="messageInput" class="visually-hidden">Сообщение</label>
+      <input type="text" id="messageInput" placeholder="Введите сообщение..." required>
+      <button type="submit">Отправить</button>
+    </form>
+  </div>
+
+  <script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+</body>
+</html>
