@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Чат с {{ other_user.name }}</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/chat.css') }}">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <link href="https://fonts.googleapis.com/css2?family=Inter&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/chat.css') }}" />
 </head>
 <body>
 
@@ -14,17 +16,38 @@
   </div>
 
   <div class="chat-container">
+    <!-- Верхняя панель с фото и именем -->
+    <div class="chat-header">
+      <a href="{{ url_for('view_profile', id=other_user.id) }}">
+        <img
+          src="{{
+            url_for('static', filename=other_user.questionnaire.profile_photo.replace('static/', '').replace('\\', '/'))
+            if other_user.questionnaire and other_user.questionnaire.profile_photo
+            else url_for('static', filename='img/avatar_placeholder.png')
+          }}"
+          alt="Фото профиля"
+          class="chat-avatar"
+        />
+      </a>
+      <div class="chat-username">{{ other_user.name }}</div>
+    </div>
+
+    <!-- Сообщения -->
     <div class="messages" id="messages"></div>
 
+    <!-- Ошибка -->
     <div id="errorBox"></div>
 
-    <form class="input-area" id="messageForm">
+    <!-- Форма отправки -->
+    <form class="input-area" id="messageForm" autocomplete="off">
       {% if other_user %}
         <input type="hidden" id="receiver_id" value="{{ other_user.id }}">
       {% endif %}
       <label for="messageInput" class="visually-hidden">Сообщение</label>
-      <input type="text" id="messageInput" placeholder="Введите сообщение..." required>
-      <button type="submit">Отправить</button>
+      <input type="text" id="messageInput" placeholder="Введите сообщение..." required />
+      <button type="submit" class="send-button" aria-label="Отправить">
+        <img src="{{ url_for('static', filename='image/img_17.png') }}" alt="Отправить" />
+      </button>
     </form>
   </div>
 
