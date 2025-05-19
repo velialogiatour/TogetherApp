@@ -1,19 +1,24 @@
-from utils import is_offensive
+from toxic_filter import is_offensive
 
 test_messages = [
     "Привет, как дела?",
     "Ты идиот",
-    "Это бред и ты чмо",
+    "Закрой рот, урод",
     "Добрый день, приятно познакомиться!",
-    "Закрой рот, урод"
+    "Go to hell",
+    "You're a smart guy",
+    "Shut up, bastard",
+    "Ты очень хороший человек",
+    "Ненавижу тебя",
+    "Ублюдок, пошёл вон",
+    "Ты лучший!",
+    "Чмошник",
 ]
 
+print("Тестирование фильтра токсичных сообщений:")
+print("=" * 45)
+
 for msg in test_messages:
-    print(f"Проверка сообщения: '{msg}'")
-    if is_offensive(msg):
-        print("❌ Сообщение признано оскорбительным.")
-    else:
-        print("✅ Сообщение допустимо.")
-    print('-' * 40)
-
-
+    result = is_offensive(msg)
+    label = "❌ Токсично" if result else "✅ Не токсично"
+    print(f"'{msg}' — {label}")
