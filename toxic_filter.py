@@ -6,7 +6,6 @@ warnings.filterwarnings("ignore", category=UserWarning)
 
 MODEL_PATH = os.path.join("ml_model", "toxicity_filter_model.joblib")
 
-# Загружаем модель один раз при импорте модуля
 model = joblib.load(MODEL_PATH)
 
 def is_offensive(text, threshold=0.7):
