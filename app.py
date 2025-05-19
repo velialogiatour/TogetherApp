@@ -6,13 +6,14 @@ import logging
 from flask import Flask, render_template, redirect, url_for, flash, session, request, jsonify
 from flask_mail import Message, Mail
 from flask_wtf import CSRFProtect
+from sqlalchemy import or_
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 
 from config import Connect
 from forms import RegisterForm, LoginForm, ForgotPasswordForm, ResetPasswordForm, QuestionnaireForm
-from models import db, User, PasswordResetToken, Like, Messages, Questionnaire
-from utils import is_offensive
+from models import db, User, PasswordResetToken, Like, Messages, Questionnaire, Matches
+from toxic_filter import is_offensive
 
 logger = logging.getLogger(__name__)
 
@@ -272,31 +273,215 @@ def questionary():
 
 @app.route('/basepage')
 def basepage():
-    return render_template('basepage.html')
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    user_id = session['user_id']
+    matched_ids = get_matched_user_ids(user_id)
+
+    query = Questionnaire.query.filter(
+        Questionnaire.user_id != user_id,
+        ~Questionnaire.user_id.in_(matched_ids)
+    )
+
+    # Поисковый запрос
+    keyword = request.args.get('query', '').strip().lower()
+    if keyword:
+        query = query.filter(
+            or_(
+                Questionnaire.interests.ilike(f'%{keyword}%'),
+                Questionnaire.description.ilike(f'%{keyword}%'),
+                Questionnaire.city.ilike(f'%{keyword}%')
+            )
+        )
+
+    # Пол (gender)
+    gender = request.args.get('gender')
+    if gender:
+        query = query.filter_by(gender=gender)
+
+    # Возраст
+    age_from = request.args.get('ageFrom', type=int)
+    age_to = request.args.get('ageTo', type=int)
+    if age_from:
+        query = query.filter(Questionnaire.age >= age_from)
+    if age_to:
+        query = query.filter(Questionnaire.age <= age_to)
+
+    # Страна и город
+    country = request.args.get('country', '').strip()
+    if country:
+        query = query.filter(Questionnaire.country.ilike(f'%{country}%'))
+
+    city = request.args.get('city', '').strip()
+    if city:
+        query = query.filter(Questionnaire.city.ilike(f'%{city}%'))
+
+    # Рост
+    height_from = request.args.get('heightFrom', type=int)
+    height_to = request.args.get('heightTo', type=int)
+    if height_from:
+        query = query.filter(Questionnaire.height >= height_from)
+    if height_to:
+        query = query.filter(Questionnaire.height <= height_to)
+
+    # Знак зодиака
+    zodiac = request.args.get('zodiac_sign', '').strip()
+    if zodiac:
+        query = query.filter(Questionnaire.zodiac_sign.ilike(f'%{zodiac}%'))
+
+    # Интересы
+    interests = request.args.get('interests', '').strip()
+    if interests:
+        query = query.filter(Questionnaire.interests.ilike(f'%{interests}%'))
+
+    profiles = query.all()
+    return render_template('basepage.html', profiles=profiles)
+
+
+@app.route('/basepage_data')
+def basepage_data():
+    if 'user_id' not in session:
+        return jsonify([])
+
+    user_id = session['user_id']
+    matched_ids = get_matched_user_ids(user_id)
+
+    query = Questionnaire.query.filter(
+        Questionnaire.user_id != user_id,
+        ~Questionnaire.user_id.in_(matched_ids)
+    )
+
+    # Поиск по слову
+    keyword = request.args.get('query', '').strip().lower()
+    if keyword:
+        query = query.filter(
+            or_(
+                Questionnaire.interests.ilike(f'%{keyword}%'),
+                Questionnaire.description.ilike(f'%{keyword}%'),
+                Questionnaire.city.ilike(f'%{keyword}%')
+            )
+        )
+
+    # Фильтры
+    gender = request.args.get('gender')
+    if gender:
+        query = query.filter_by(gender=gender)
+
+    age_from = request.args.get('ageFrom', type=int)
+    age_to = request.args.get('ageTo', type=int)
+    if age_from:
+        query = query.filter(Questionnaire.age >= age_from)
+    if age_to:
+        query = query.filter(Questionnaire.age <= age_to)
+
+    country = request.args.get('country', '').strip()
+    if country:
+        query = query.filter(Questionnaire.country.ilike(f'%{country}%'))
+
+    city = request.args.get('city', '').strip()
+    if city:
+        query = query.filter(Questionnaire.city.ilike(f'%{city}%'))
+
+    height_from = request.args.get('heightFrom', type=int)
+    height_to = request.args.get('heightTo', type=int)
+    if height_from:
+        query = query.filter(Questionnaire.height >= height_from)
+    if height_to:
+        query = query.filter(Questionnaire.height <= height_to)
+
+    zodiac = request.args.get('zodiac_sign', '').strip()
+    if zodiac:
+        query = query.filter(Questionnaire.zodiac_sign.ilike(f'%{zodiac}%'))
+
+    interests = request.args.get('interests', '').strip()
+    if interests:
+        query = query.filter(Questionnaire.interests.ilike(f'%{interests}%'))
+
+    # Пагинация
+    page = request.args.get('page', 1, type=int)
+    per_page = 10
+    paginated = query.paginate(page=page, per_page=per_page, error_out=False)
+    results = []
+
+    for profile in paginated.items:
+        results.append({
+            "id": profile.id,
+            "name": profile.user.name,
+            "age": profile.age,
+            "city": profile.city,
+            "country": profile.country,
+            "zodiac_sign": profile.zodiac_sign,
+            "profile_photo": profile.profile_photo
+        })
+
+    return jsonify(results)
+
 
 @app.route('/like/<int:liked_user_id>', methods=['POST'])
 def like_user(liked_user_id):
     if 'user_id' not in session:
+        if request.is_json:
+            return jsonify({"success": False, "message": "Требуется авторизация"}), 401
         flash("Сначала войдите в аккаунт", "warning")
         return redirect(url_for('login'))
 
     user_id = session['user_id']
+
     if user_id == liked_user_id:
+        if request.is_json:
+            return jsonify({"success": False, "message": "Нельзя лайкнуть себя"}), 400
         flash("Нельзя лайкнуть себя :)", "info")
         return redirect(request.referrer or url_for('basepage'))
 
+    from models import Matches
+
     existing_like = Like.query.filter_by(user_id=user_id, liked_user_id=liked_user_id).first()
+
     if existing_like:
         db.session.delete(existing_like)
+
+        # Удаляем матч, если он был
+        match = Matches.query.filter(
+            ((Matches.user_one_id == user_id) & (Matches.user_two_id == liked_user_id)) |
+            ((Matches.user_one_id == liked_user_id) & (Matches.user_two_id == user_id))
+        ).first()
+        if match:
+            db.session.delete(match)
+
         db.session.commit()
+        if request.is_json:
+            return jsonify({"success": True, "message": "Лайк удалён"})
         flash("Лайк удалён", "info")
+
     else:
         new_like = Like(user_id=user_id, liked_user_id=liked_user_id)
         db.session.add(new_like)
+
+        reciprocal_like = Like.query.filter_by(user_id=liked_user_id, liked_user_id=user_id).first()
+
+        if reciprocal_like:
+            existing_match = Matches.query.filter(
+                ((Matches.user_one_id == user_id) & (Matches.user_two_id == liked_user_id)) |
+                ((Matches.user_one_id == liked_user_id) & (Matches.user_two_id == user_id))
+            ).first()
+
+            if not existing_match:
+                match = Matches(
+                    user_one_id=user_id,
+                    user_two_id=liked_user_id,
+                    matched_ad="взаимный лайк"
+                )
+                db.session.add(match)
+
         db.session.commit()
+        if request.is_json:
+            return jsonify({"success": True, "message": "Лайк поставлен"})
         flash("Вы поставили лайк!", "success")
 
     return redirect(request.referrer or url_for('basepage'))
+
+
 
 
 @app.route('/likes')
@@ -307,16 +492,14 @@ def likes_page():
 
     user_id = session['user_id']
 
-    # Лайки, которые я поставил
     liked_users = User.query.join(Like, User.id == Like.liked_user_id)\
         .filter(Like.user_id == user_id).all()
 
-    # Лайки, которые получил
     users_who_liked_me = User.query.join(Like, User.id == Like.user_id)\
         .filter(Like.liked_user_id == user_id).all()
 
-    # Взаимные лайки (матчи)
-    matches = [u for u in liked_users if u in users_who_liked_me]
+    matched_ids = get_matched_user_ids(user_id)
+    matches = User.query.filter(User.id.in_(matched_ids)).all()
 
     return render_template(
         "likes.html",
@@ -324,6 +507,7 @@ def likes_page():
         users_who_liked_me=users_who_liked_me,
         matches=matches
     )
+
 
 
 @app.route('/chats')
@@ -359,14 +543,23 @@ def chat(user_id):
     return render_template("chat.html", other_user=other_user)  # <-- передаём его сюда
 
 
+@csrf.exempt
 @app.route("/send_message", methods=["POST"])
 def send_message():
     if "user_id" not in session:
         return jsonify({"error": "Unauthorized"}), 401
 
+    # print("DEBUG: request.form =", request.form)
+
     sender_id = session["user_id"]
-    receiver_id = int(request.form["receiver_id"])
-    content = request.form["message"].strip()
+    receiver_id = request.form.get("receiver_id", type=int)
+    content = request.form.get("message", "").strip()
+
+    # print("DEBUG: receiver_id =", receiver_id)
+    # print("DEBUG: content =", content)
+
+    if not receiver_id or not content:
+        return jsonify({"error": "Сообщение содержит недопустимый контент"}), 400
 
     # Проверка на взаимный лайк
     match1 = Like.query.filter_by(user_id=sender_id, liked_user_id=receiver_id).first()
@@ -379,17 +572,17 @@ def send_message():
     if is_offensive(content):
         return jsonify({"error": "Сообщение содержит недопустимый контент."}), 400
 
-    if content:
-        msg = Messages(
-            sender_id=sender_id,
-            receiver_id=receiver_id,
-            message=content,
-            created_at=datetime.now(timezone.utc)
-        )
-        db.session.add(msg)
-        db.session.commit()
+    msg = Messages(
+        sender_id=sender_id,
+        receiver_id=receiver_id,
+        message=content,
+        created_at=datetime.now(timezone.utc)
+    )
+    db.session.add(msg)
+    db.session.commit()
 
     return jsonify({"success": True})
+
 
 
 
@@ -415,6 +608,139 @@ def chat_updates(user_id):
         } for m in messages
     ])
 
+
+
+@app.route('/user_profile')
+def user_profile():
+    return render_template('user_profile.html')
+
+
+
+@app.route('/view_profile/<int:id>')
+def view_profile(id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    current_user_id = session['user_id']
+    profile = Questionnaire.query.get_or_404(id)
+
+    # Проверка взаимного лайка
+    like_from_me = Like.query.filter_by(user_id=current_user_id, liked_user_id=profile.user_id).first()
+    like_from_them = Like.query.filter_by(user_id=profile.user_id, liked_user_id=current_user_id).first()
+    mutual_like = like_from_me and like_from_them
+
+    return render_template('view_profile.html', profile=profile, mutual_like=mutual_like)
+
+
+@app.route('/block/<int:user_id>', methods=['POST'])
+def block_user(user_id):
+    if 'user_id' not in session:
+        flash("Сначала войдите в аккаунт", "warning")
+        return redirect(url_for('login'))
+
+    current_user_id = session['user_id']
+
+    like = Like.query.filter_by(user_id=current_user_id, liked_user_id=user_id).first()
+
+    if like:
+        like.is_blocked = True
+    else:
+        like = Like(user_id=current_user_id, liked_user_id=user_id, is_blocked=True)
+        db.session.add(like)
+
+    db.session.commit()
+    flash("Пользователь заблокирован.", "info")
+    return redirect(url_for('view_profile', id=user_id))
+
+
+@app.route('/unblock/<int:user_id>', methods=['POST'])
+def unblock_user(user_id):
+    if 'user_id' not in session:
+        flash("Сначала войдите в аккаунт", "warning")
+        return redirect(url_for('login'))
+
+    current_user_id = session['user_id']
+
+    like = Like.query.filter_by(user_id=current_user_id, liked_user_id=user_id).first()
+
+    if like and like.is_blocked:
+        like.is_blocked = False
+        db.session.commit()
+        flash("Пользователь разблокирован.", "info")
+    else:
+        flash("Этот пользователь не был заблокирован.", "warning")
+
+    return redirect(url_for('user_profile'))
+
+
+
+
+def get_matched_user_ids(user_id):
+    match_pairs = db.session.query(Matches.user_one_id, Matches.user_two_id).filter(
+        (Matches.user_one_id == user_id) | (Matches.user_two_id == user_id)
+    ).all()
+
+    matched_ids = set()
+    for u1, u2 in match_pairs:
+        matched_ids.update([u1, u2])
+    matched_ids.discard(user_id)
+
+    return matched_ids
+
+
+def build_filtered_profiles_query(user_id):
+    matched_ids = get_matched_user_ids(user_id)
+
+    query = Questionnaire.query.filter(
+        Questionnaire.user_id != user_id,
+        ~Questionnaire.user_id.in_(matched_ids)
+    )
+
+    keyword = request.args.get('query', '').strip().lower()
+    if keyword:
+        query = query.filter(
+            or_(
+                Questionnaire.interests.ilike(f'%{keyword}%'),
+                Questionnaire.description.ilike(f'%{keyword}%'),
+                Questionnaire.city.ilike(f'%{keyword}%')
+            )
+        )
+
+    gender = request.args.get('gender')
+    if gender:
+        query = query.filter_by(gender=gender)
+
+    age_from = request.args.get('ageFrom', type=int)
+    age_to = request.args.get('ageTo', type=int)
+    if age_from:
+        query = query.filter(Questionnaire.age >= age_from)
+    if age_to:
+        query = query.filter(Questionnaire.age <= age_to)
+
+    country = request.args.get('country', '').strip()
+    if country:
+        query = query.filter(Questionnaire.country.ilike(f'%{country}%'))
+
+    city = request.args.get('city', '').strip()
+    if city:
+        query = query.filter(Questionnaire.city.ilike(f'%{city}%'))
+
+    height_from = request.args.get('heightFrom', type=int)
+    height_to = request.args.get('heightTo', type=int)
+    if height_from:
+        query = query.filter(Questionnaire.height >= height_from)
+    if height_to:
+        query = query.filter(Questionnaire.height <= height_to)
+
+    zodiac = request.args.get('zodiac_sign', '').strip()
+    if zodiac:
+        query = query.filter(Questionnaire.zodiac_sign.ilike(f'%{zodiac}%'))
+
+    interests = request.args.get('interests', '').strip()
+    if interests:
+        query = query.filter(Questionnaire.interests.ilike(f'%{interests}%'))
+
+    return query
 
 
 if __name__ == '__main__':
