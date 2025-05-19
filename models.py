@@ -90,3 +90,11 @@ class Settings(db.Model):
 
     user = db.relationship('User', backref=db.backref('settings', uselist=False))
 
+
+class Matches(db.Model):
+    __tablename__ = 'matches'
+
+    match_id = db.Column(db.Integer, primary_key=True)
+    user_one_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    user_two_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    matched_ad = db.Column(db.String)
