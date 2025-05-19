@@ -8,14 +8,15 @@
 <body>
 
 <div class="likes-page">
-    <!-- Чёрная стрелка назад -->
+
+    <!-- Стрелка назад -->
     <div class="back-button">
         <a href="{{ url_for('basepage') }}">&#8592;</a>
     </div>
 
     <h1>Мои лайки</h1>
 
-    <!-- Вкладки -->
+    <!-- Кнопки вкладок -->
     <div class="tab-buttons">
         <button class="tab-btn active" data-tab="liked">Я лайкнул</button>
         <button class="tab-btn" data-tab="likedme">Меня лайкнули</button>
@@ -29,8 +30,11 @@
             {% if liked_users %}
                 {% for user in liked_users %}
                     <div class="like-card">
-                        <p>{{ user.name }}</p>
-                        <a href="{{ url_for('view_profile', user_id=user.id) }}">Смотреть профиль</a>
+                        <img class="profile-thumb" src="{{ user.questionnaire.profile_photo }}" alt="Фото {{ user.name }}">
+                        <div class="like-info">
+                            <p>{{ user.name }}</p>
+                            <a href="{{ url_for('view_profile', id=user.id) }}">Смотреть профиль</a>
+                        </div>
                     </div>
                 {% endfor %}
             {% else %}
@@ -42,8 +46,11 @@
             {% if users_who_liked_me %}
                 {% for user in users_who_liked_me %}
                     <div class="like-card">
-                        <p>{{ user.name }}</p>
-                        <a href="{{ url_for('view_profile', user_id=user.id) }}">Смотреть профиль</a>
+                        <img class="profile-thumb" src="{{ user.questionnaire.profile_photo }}" alt="Фото {{ user.name }}">
+                        <div class="like-info">
+                            <p>{{ user.name }}</p>
+                            <a href="{{ url_for('view_profile', id=user.id) }}">Смотреть профиль</a>
+                        </div>
                     </div>
                 {% endfor %}
             {% else %}
@@ -55,8 +62,11 @@
             {% if matches %}
                 {% for user in matches %}
                     <div class="like-card">
-                        <p>{{ user.name }}</p>
-                        <a href="{{ url_for('view_profile', user_id=user.id) }}">Смотреть профиль</a>
+                        <img class="profile-thumb" src="{{ user.questionnaire.profile_photo }}" alt="Фото {{ user.name }}">
+                        <div class="like-info">
+                            <p>{{ user.name }}</p>
+                            <a href="{{ url_for('view_profile', id=user.id) }}">Смотреть профиль</a>
+                        </div>
                     </div>
                 {% endfor %}
             {% else %}
@@ -70,5 +80,3 @@
 <script src="{{ url_for('static', filename='js/likes.js') }}"></script>
 </body>
 </html>
-
-

@@ -8,13 +8,13 @@ body {
 
 /* Контейнер лайков */
 .likes-page {
-    max-width: 600px;
+    max-width: 700px;
     margin: 60px auto 30px;
     padding: 20px;
     position: relative;
 }
 
-/* Фиксированная чёрная стрелка слева вверху */
+/* Стрелка назад */
 .back-button {
     position: fixed;
     top: 15px;
@@ -32,14 +32,14 @@ body {
     color: #007BFF;
 }
 
-/* Заголовок страницы */
+/* Заголовок */
 h1 {
     text-align: center;
     margin-top: 20px;
     margin-bottom: 30px;
 }
 
-/* Кнопки вкладок */
+/* Вкладки */
 .tab-buttons {
     display: flex;
     justify-content: space-around;
@@ -75,40 +75,60 @@ h1 {
     display: block;
 }
 
-/* Карточки пользователей */
+/* Карточка лайка */
 .like-card {
+    display: flex;
+    align-items: center;
     background-color: #f5f5f5;
     border-radius: 14px;
-    padding: 20px;
+    padding: 15px 20px;
     margin-bottom: 20px;
-    text-align: center;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease;
 }
 
-.like-card p {
-    margin: 0 0 10px 0;
-    font-size: 18px;
+.like-card:hover {
+    transform: translateY(-3px);
+}
+
+/* Фото профиля */
+.profile-thumb {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-right: 20px;
+    flex-shrink: 0;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Контейнер текста */
+.like-info {
+    flex-grow: 1;
+}
+
+.like-info p {
+    margin: 0 0 8px 0;
+    font-size: 17px;
     font-weight: 600;
+    color: #222;
 }
 
-.like-card a {
+.like-info a {
     text-decoration: none;
     color: #007BFF;
     font-weight: 500;
 }
 
-.like-card a:hover {
+.like-info a:hover {
     text-decoration: underline;
 }
 
-/* Сообщение при отсутствии лайков */
+/* Сообщение при пустом списке */
 .empty-message {
     text-align: center;
     color: #777;
     margin-top: 20px;
     font-size: 16px;
 }
-
-
-
-
