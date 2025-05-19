@@ -34,6 +34,7 @@ body {
 h1 {
   text-align: center;
   margin-bottom: 30px;
+  font-size: 24px;
 }
 
 /* Список чатов */
@@ -44,47 +45,61 @@ h1 {
 }
 
 .chat-item {
-  background-color: #f5f5f5;
   border-radius: 14px;
+  background-color: #f5f5f5;
   margin-bottom: 15px;
-  padding: 12px;
-  display: flex;
-  align-items: center;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   transition: background-color 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 .chat-item:hover {
-  background-color: #e0e0e0;
+  background-color: #eaeaea;
+}
+
+.chat-link {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  color: inherit;
+  padding: 14px 16px;
 }
 
 .avatar {
-  width: 50px;
-  height: 50px;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
   object-fit: cover;
   margin-right: 15px;
+  border: 2px solid #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
 }
 
 .chat-info {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .chat-name {
-  font-weight: bold;
-  margin-bottom: 5px;
+  font-weight: 600;
+  font-size: 16px;
+  margin-bottom: 4px;
+  color: #222;
 }
 
 .chat-preview {
   font-size: 14px;
-  color: #777;
+  color: #666;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-/* Сообщение об отсутствии чатов */
+/* Сообщение при отсутствии чатов */
 .no-chats {
   text-align: center;
-  margin-top: 30px;
+  margin-top: 40px;
   font-size: 16px;
   color: #777;
 }
-

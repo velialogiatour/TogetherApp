@@ -3,10 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <title>Чаты</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link href="https://fonts.googleapis.com/css2?family=Inter&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/chats.css') }}">
 </head>
 <body>
+
   <!-- Стрелка назад -->
   <div class="back-button">
     <a href="{{ url_for('basepage') }}">&#8592;</a>
@@ -19,8 +21,8 @@
       <ul class="chat-list">
         {% for user in chat_partners %}
           <li class="chat-item">
-            <a href="{{ url_for('chat', user_id=user.id) }}">
-              <img src="{{ url_for('static', filename='img/avatar_placeholder.png') }}" alt="Аватар" class="avatar">
+            <a href="{{ url_for('chat', user_id=user.id) }}" class="chat-link">
+              <img src="{{ user.questionnaire.profile_photo or url_for('static', filename='img/avatar_placeholder.png') }}" alt="Аватар {{ user.name }}" class="avatar">
               <div class="chat-info">
                 <div class="chat-name">{{ user.name }}</div>
                 <div class="chat-preview">Последнее сообщение будет здесь...</div>
@@ -33,6 +35,6 @@
       <p class="no-chats">У вас пока нет активных переписок.</p>
     {% endif %}
   </div>
+
 </body>
 </html>
-
