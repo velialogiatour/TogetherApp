@@ -1,10 +1,121 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <title>Title</title>
+  <meta charset="UTF-8" />
+  <title>{{ profile.user.name }} — Профиль</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/view_profile.css') }}">
 </head>
 <body>
 
+  <!-- Стрелка назад -->
+  <div class="back-button">
+    <a href="{{ url_for('basepage') }}">&#8592;</a>
+  </div>
+
+  <!-- Всплывающее уведомление -->
+  <div id="toast-container"></div>
+
+  <div class="profile-container">
+
+    <!-- Фото профиля -->
+    <div class="photo-section">
+      <img src="{{ url_for('static', filename=profile.profile_photo.split('static/')[-1].replace('\\', '/')) }}"
+           alt="Фото профиля пользователя" class="main-photo">
+      <h2 class="name-age">{{ profile.user.name }}, {{ profile.age }}</h2>
+    </div>
+
+    <!-- Основной блок анкеты -->
+    <form class="profile-info-form" disabled>
+      <div class="form-layout">
+
+        <!-- Левая часть: поля анкеты -->
+        <div class="form-fields">
+
+          <div class="form-group">
+            <img src="{{ url_for('static', filename='image/img_9.png') }}" class="icon" alt="Пол">
+            <span class="label">Пол:</span>
+            <p>{{ profile.gender }}</p>
+          </div>
+
+          <div class="form-group">
+            <img src="{{ url_for('static', filename='image/img_10.png') }}" class="icon" alt="Город">
+            <span class="label">Город:</span>
+            <p>{{ profile.city }}</p>
+          </div>
+
+          <div class="form-group">
+            <img src="{{ url_for('static', filename='image/img_11.png') }}" class="icon" alt="Страна">
+            <span class="label">Страна:</span>
+            <p>{{ profile.country }}</p>
+          </div>
+
+          <div class="form-group">
+            <img src="{{ url_for('static', filename='image/img_12.png') }}" class="icon" alt="Рост">
+            <span class="label">Рост:</span>
+            <p>{{ profile.height }} см</p>
+          </div>
+
+          <div class="form-group">
+            <img src="{{ url_for('static', filename='image/img_13.png') }}" class="icon" alt="Знак зодиака">
+            <span class="label">Знак зодиака:</span>
+            <p>{{ profile.zodiac_sign }}</p>
+          </div>
+
+          <div class="form-group">
+            <img src="{{ url_for('static', filename='image/img_14.png') }}" class="icon" alt="Интересы">
+            <span class="label">Интересы:</span>
+            <p>{{ profile.interests }}</p>
+          </div>
+
+          <div class="form-group">
+            <img src="{{ url_for('static', filename='image/img_15.png') }}" class="icon" alt="О себе">
+            <span class="label">О себе:</span>
+            <p>{{ profile.description }}</p>
+          </div>
+
+        </div>
+
+        <!-- Правая часть: дополнительное фото -->
+        <div class="side-photo">
+          {% if profile.additional_photos %}
+          <img src="{{ url_for('static', filename=profile.additional_photos[0].split('static/')[-1].replace('\\', '/')) }}"
+               alt="Дополнительное фото" class="mini-additional-photo"
+               onclick="openPhoto(this.src)">
+          {% endif %}
+        </div>
+
+      </div>
+    </form>
+
+    <!-- Кнопки действий -->
+    <div class="action-buttons">
+      <form id="like-form" data-user-id="{{ profile.user.id }}">
+        <button type="button" class="like-button" title="Поставить лайк">
+          <img src="{{ url_for('static', filename='image/img_7.png') }}" alt="Кнопка лайка">
+        </button>
+      </form>
+
+      <form id="block-form" data-user-id="{{ profile.user.id }}">
+        <button type="button" class="block-button-img" title="Заблокировать">
+          <img src="{{ url_for('static', filename='image/img_8.png') }}" alt="Кнопка блокировки">
+        </button>
+      </form>
+
+      {% if mutual_like and not is_blocked %}
+      <a href="{{ url_for('chat', user_id=profile.user.id) }}" class="chat-button-img" title="Чат">
+        <img src="{{ url_for('static', filename='image/img_16.png') }}" alt="Перейти к чату">
+      </a>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Оверлей увеличенного фото -->
+  <div id="overlay" onclick="closePhoto()">
+    <img id="overlay-img" src="" alt="Фото в полном размере">
+  </div>
+
+  <script src="{{ url_for('static', filename='js/view_profile.js') }}"></script>
 </body>
 </html>
