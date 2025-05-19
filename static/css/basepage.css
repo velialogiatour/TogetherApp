@@ -1,0 +1,242 @@
+body {
+  margin: 0;
+  font-family: "Segoe UI", sans-serif;
+  background-color: #f2f2f2;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* FLASH-сообщения */
+.flash-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.flash {
+  padding: 12px 24px;
+  border-radius: 20px;
+  font-size: 15px;
+  font-weight: 500;
+  color: #fff;
+  background-color: #28a745;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.flash.error,
+.flash.danger {
+  background-color: #dc3545;
+}
+
+/* Поисковая строка */
+.search-bar {
+  display: flex;
+  gap: 10px;
+  padding: 15px;
+  background: #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.search-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-wrapper input[type="text"] {
+  padding: 10px 40px 10px 10px;
+  width: 280px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  font-size: 15px;
+}
+
+.inline-filter-button {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.inline-filter-button img {
+  width: 20px;
+  height: 20px;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.inline-filter-button:hover img {
+  opacity: 1;
+}
+
+.icon-button {
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.icon-button img {
+  width: 24px;
+  height: 24px;
+  opacity: 0.8;
+  transition: opacity 0.2s;
+}
+
+.icon-button:hover img {
+  opacity: 1;
+}
+
+/* Панель фильтров */
+.filter-panel {
+  background-color: #fafafa;
+  padding: 20px 10px;
+  border-bottom: 1px solid #ddd;
+  display: none;
+}
+
+.filter-panel:not(.hidden) {
+  display: flex;
+  justify-content: center;
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  justify-content: center;
+  max-width: 1000px;
+}
+
+.filters input,
+.filters select,
+.filters textarea {
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+  width: 180px;
+  resize: vertical;
+}
+
+.filters .filter-label {
+  width: 100%;
+  text-align: center;
+  font-size: 14px;
+  color: #888;
+  margin-top: 10px;
+}
+
+/* Кнопка фильтра (иконка) */
+.filter-btn-img {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  margin-top: 10px;
+}
+
+.filter-btn-img img {
+  width: 28px;
+  height: 28px;
+  opacity: 0.8;
+  transition: opacity 0.2s;
+}
+
+.filter-btn-img img:hover {
+  opacity: 1;
+}
+
+/* Сетка карточек */
+.cards-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 20px;
+  padding: 20px;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Карточка анкеты */
+.profile-card {
+  background-color: #fff;
+  border-radius: 14px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s ease;
+}
+
+.profile-card:hover {
+  transform: translateY(-5px);
+}
+
+.profile-photo {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+}
+
+.profile-info {
+  padding: 12px;
+  text-align: center;
+}
+
+.profile-info h3 {
+  margin: 0;
+  font-size: 16px;
+  color: #222;
+}
+
+.profile-info p {
+  margin: 5px 0;
+  font-size: 14px;
+  color: #666;
+}
+
+/* Сообщение, если анкет нет */
+.no-profiles-msg {
+  grid-column: 1 / -1;
+  text-align: center;
+  font-size: 18px;
+  color: #777;
+  padding: 60px 0;
+}
+
+/* Индикатор загрузки */
+.loading {
+  text-align: center;
+  padding: 20px;
+  color: #777;
+  font-size: 14px;
+}
+
+/* Нижнее меню */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  background: #fff;
+  border-top: 1px solid #ddd;
+  display: flex;
+  justify-content: space-around;
+  padding: 20px 0;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.bottom-nav img {
+  width: 36px;
+  height: 36px;
+}
