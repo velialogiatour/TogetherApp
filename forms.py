@@ -48,7 +48,7 @@ class ResetPasswordForm(FlaskForm):
 
 class QuestionnaireForm(FlaskForm):
     age = IntegerField('Возраст', validators=[DataRequired(), NumberRange(min=18, max=99)])
-    gender = SelectField('Пол', choices=[('Мужчина', 'Мужчина'), ('Женщина', 'Женщина'), ('Другое', 'Другое')], validators=[DataRequired()])
+    gender = SelectField('Пол', choices=[('Мужчина', 'Мужчина'), ('Женщина', 'Женщина')], validators=[DataRequired()])
     country = StringField('Страна', validators=[DataRequired()])
     city = StringField('Город', validators=[DataRequired()])
     height = IntegerField('Рост (см)', validators=[NumberRange(min=100, max=250)])
