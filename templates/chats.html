@@ -17,6 +17,12 @@
   <div class="container">
     <h1>Ваши переписки</h1>
 
+    {% set month_names = {
+      1: 'января', 2: 'февраля', 3: 'марта', 4: 'апреля',
+      5: 'мая', 6: 'июня', 7: 'июля', 8: 'августа',
+      9: 'сентября', 10: 'октября', 11: 'ноября', 12: 'декабря'
+    } %}
+
     {% if chat_partners %}
       <ul class="chat-list">
         {% for user in chat_partners %}
@@ -25,7 +31,15 @@
               <img src="{{ user.questionnaire.profile_photo or url_for('static', filename='img/avatar_placeholder.png') }}" alt="Аватар {{ user.name }}" class="avatar">
               <div class="chat-info">
                 <div class="chat-name">{{ user.name }}</div>
-                <div class="chat-preview">Последнее сообщение будет здесь...</div>
+                <div class="chat-preview">
+                  <span class="message-text">{{ user.last_message }}</span>
+                  {% if user.last_message_time %}
+                    {% set dt = user.last_message_time %}
+                    <span class="message-time">
+                      {{ dt.day }} {{ month_names[dt.month] }}, {{ "%02d:%02d" | format(dt.hour, dt.minute) }}
+                    </span>
+                  {% endif %}
+                </div>
               </div>
             </a>
           </li>
