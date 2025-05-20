@@ -56,6 +56,7 @@ class Like(db.Model):
     liked_user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     is_blocked = db.Column(db.Boolean, default=False)
+    is_new = db.Column(db.Boolean, default=True)
 
     # Ограничение уникальности: один лайк от user_id к liked_user_id
     __table_args__ = (
@@ -64,6 +65,7 @@ class Like(db.Model):
 
     user = db.relationship('User', foreign_keys=[user_id], backref='likes_given')
     liked_user = db.relationship('User', foreign_keys=[liked_user_id], backref='likes_received')
+
 
 class Messages(db.Model):
     __tablename__ = 'messages'
