@@ -240,3 +240,19 @@ body {
   width: 36px;
   height: 36px;
 }
+
+/* 🔴 Индикаторы непрочитанных событий */
+.menu-icon {
+  position: relative;
+}
+
+.indicator {
+  display: none;
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 10px;
+  height: 10px;
+  background-color: red;
+  border-radius: 50%;
+}

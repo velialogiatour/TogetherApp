@@ -37,13 +37,11 @@
   <div id="filter-panel" class="filter-panel hidden">
     <form class="filters" method="get" action="/basepage">
       <input type="hidden" name="query" value="{{ request.args.get('query', '') }}" />
-
       <select name="gender" aria-label="Пол">
         <option value="" disabled selected hidden>Пол</option>
         <option value="Мужчина">Мужской</option>
         <option value="Женщина">Женский</option>
       </select>
-
       <input type="number" name="ageFrom" placeholder="Возраст от" min="18" max="99" aria-label="Возраст от" />
       <input type="number" name="ageTo" placeholder="до" min="18" max="99" aria-label="Возраст до" />
       <input type="text" name="country" placeholder="Страна" aria-label="Страна" />
@@ -52,7 +50,6 @@
       <input type="number" name="heightTo" placeholder="до" min="100" max="250" aria-label="Рост до" />
       <input type="text" name="zodiac_sign" placeholder="Знак зодиака" aria-label="Знак зодиака" />
       <textarea name="interests" rows="2" placeholder="Интересы (например, спорт, кино...)" aria-label="Интересы"></textarea>
-
       <button class="filter-btn-img" type="submit" aria-label="Применить фильтр">
         <img src="../static/image/img_1.png" alt="Применить фильтр" />
       </button>
@@ -77,13 +74,19 @@
     {% endif %}
   </div>
 
-{#  <div id="loading" class="loading">Загрузка...</div>#}
-
-  <!-- Нижняя навигация -->
+  <!-- Нижняя навигация с индикаторами -->
   <nav class="bottom-nav">
     <a href="/user_profile"><img src="../static/image/img_2.png" alt="" /></a>
-    <a href="/chats"><img src="../static/image/img_6.png" alt="" /></a>
-    <a href="/likes"><img src="../static/image/img_5.png" alt="" /></a>
+
+    <a href="/chats" id="messages-icon" class="menu-icon">
+      <img src="../static/image/img_6.png" alt="Сообщения" />
+      <span class="indicator" id="messages-indicator"></span>
+    </a>
+
+    <a href="/likes" id="likes-icon" class="menu-icon">
+      <img src="../static/image/img_5.png" alt="Лайки" />
+      <span class="indicator" id="likes-indicator"></span>
+    </a>
   </nav>
 
   <!-- Авто-исчезновение флешей -->

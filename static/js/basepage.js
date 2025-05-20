@@ -22,6 +22,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Прокрутка для автоподгрузки
   window.addEventListener("scroll", handleScroll);
+
+  // Запуск проверки непрочитанных
+  checkUnread();
+  setInterval(checkUnread, 20000);
 });
 
 function handleScroll() {
@@ -75,4 +79,37 @@ function loadMoreProfiles() {
       isLoading = false;
       loading.style.display = "none";
     });
+}
+
+// 🔴 Подсветка новых лайков и сообщений
+function checkUnread() {
+  fetch('/api/unread_counts')
+    .then(res => res.json())
+    .then(data => {
+      const likesIcon = document.getElementById('likes-icon');
+      const likesIndicator = document.getElementById('likes-indicator');
+      const messagesIcon = document.getElementById('messages-icon');
+      const messagesIndicator = document.getElementById('messages-indicator');
+
+      if (likesIcon && likesIndicator) {
+        if (data.likes > 0) {
+          likesIcon.classList.add('has-new');
+          likesIndicator.style.display = 'inline-block';
+        } else {
+          likesIcon.classList.remove('has-new');
+          likesIndicator.style.display = 'none';
+        }
+      }
+
+      if (messagesIcon && messagesIndicator) {
+        if (data.messages > 0) {
+          messagesIcon.classList.add('has-new');
+          messagesIndicator.style.display = 'inline-block';
+        } else {
+          messagesIcon.classList.remove('has-new');
+          messagesIndicator.style.display = 'none';
+        }
+      }
+    })
+    .catch(err => console.error("Ошибка получения уведомлений:", err));
 }
