@@ -415,7 +415,20 @@ def basepage_data():
             "profile_photo": profile.profile_photo
         })
 
-    return jsonify(results)
+
+@app.route('/api/unread_counts')
+def unread_counts():
+    if 'user_id' not in session:
+        return jsonify({'likes': 0, 'messages': 0})
+
+    user_id = session['user_id']
+
+    new_likes = Like.query.filter_by(liked_user_id=user_id, is_new=True).count()
+    new_messages = Messages.query.filter_by(receiver_id=user_id, is_read=False).count()
+
+    return jsonify({'likes': new_likes, 'messages': new_messages})
+
+
 
 
 @app.route('/like/<int:liked_user_id>', methods=['POST'])
@@ -455,7 +468,7 @@ def like_user(liked_user_id):
         flash("Лайк удалён", "info")
 
     else:
-        new_like = Like(user_id=user_id, liked_user_id=liked_user_id)
+        new_like = Like(user_id=user_id, liked_user_id=liked_user_id, is_new=True)
         db.session.add(new_like)
 
         reciprocal_like = Like.query.filter_by(user_id=liked_user_id, liked_user_id=user_id).first()
@@ -501,6 +514,10 @@ def likes_page():
     matched_ids = get_matched_user_ids(user_id)
     matches = User.query.filter(User.id.in_(matched_ids)).all()
 
+    # Сброс флага новых лайков
+    Like.query.filter_by(liked_user_id=user_id, is_new=True).update({'is_new': False})
+    db.session.commit()
+
     return render_template(
         "likes.html",
         liked_users=liked_users,
@@ -519,12 +536,24 @@ def chats():
 
     sent = db.session.query(Messages.receiver_id.label('partner_id')).filter(Messages.sender_id == current_user_id)
     received = db.session.query(Messages.sender_id.label('partner_id')).filter(Messages.receiver_id == current_user_id)
-
     union_query = sent.union(received).subquery()
-    chat_partners = db.session.query(User).join(union_query, User.id == union_query.c.partner_id).all()
 
-    return render_template("chats.html", chat_partners=chat_partners)
+    users = db.session.query(User).join(union_query, User.id == union_query.c.partner_id).all()
 
+    for user in users:
+        last_msg = Messages.query.filter(
+            ((Messages.sender_id == current_user_id) & (Messages.receiver_id == user.id)) |
+            ((Messages.sender_id == user.id) & (Messages.receiver_id == current_user_id))
+        ).order_by(Messages.created_at.desc()).first()
+
+        if last_msg:
+            user.last_message = last_msg.message
+            user.last_message_time = last_msg.created_at
+        else:
+            user.last_message = "Нет сообщений"
+            user.last_message_time = None
+
+    return render_template("chats.html", chat_partners=users)
 
 
 @app.route("/chat/<int:user_id>")
