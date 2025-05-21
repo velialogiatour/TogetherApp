@@ -125,3 +125,16 @@ select {
 .centered-button {
   text-align: center;
 }
+
+/* ✅ Новые стили для иконок */
+.input-with-icon {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.field-icon {
+  width: 20px;
+  height: 20px;
+  opacity: 0.7;
+}

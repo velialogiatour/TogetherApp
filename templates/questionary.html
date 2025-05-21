@@ -8,7 +8,6 @@
 </head>
 <body>
 
-  <!-- Блок для flash-сообщений -->
   {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
       {% for category, message in messages %}
@@ -32,17 +31,99 @@
         {{ form.profile_photo(id="profilePhotoInput") }}
       </div>
 
-      <!-- Остальные поля -->
-      <div class="form-group">{{ form.age.label }}{{ form.age(class="input") }}</div>
-      <div class="form-group">{{ form.gender.label }}{{ form.gender(class="input") }}</div>
-      <div class="form-group">{{ form.country.label }}{{ form.country(class="input") }}</div>
-      <div class="form-group">{{ form.city.label }}{{ form.city(class="input") }}</div>
-      <div class="form-group">{{ form.height.label }}{{ form.height(class="input") }}</div>
-      <div class="form-group">{{ form.zodiac_sign.label }}{{ form.zodiac_sign(class="input") }}</div>
-      <div class="form-group">{{ form.interests.label }}{{ form.interests(class="textarea") }}</div>
-      <div class="form-group">{{ form.description.label }}{{ form.description(class="textarea") }}</div>
+      <!-- Поля анкеты -->
+      <div class="form-group">
+        <label>{{ form.age.label.text }}</label>
+        <div class="input-with-icon">
+          <img src="{{ url_for('static', filename='image/img_18.png') }}" class="field-icon" alt="">
+          {{ form.age(class="input", id="age") }}
+        </div>
+      </div>
 
-      <!-- Кнопка "Добавить дополнительные фото" -->
+      <div class="form-group">
+        <label>{{ form.gender.label.text }}</label>
+        <div class="input-with-icon">
+          <img src="{{ url_for('static', filename='image/img_9.png') }}" class="field-icon" alt="">
+          {{ form.gender(class="input", id="gender") }}
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="country">Страна</label>
+        <div class="input-with-icon">
+          <img src="{{ url_for('static', filename='image/img_11.png') }}" class="field-icon" alt="">
+          <select name="country" id="country" class="input">
+            <option value="">Выберите страну</option>
+            <option value="Россия">Россия</option>
+            <option value="Беларусь">Беларусь</option>
+            <option value="Казахстан">Казахстан</option>
+            <option value="Армения">Армения</option>
+            <option value="Азербайджан">Азербайджан</option>
+            <option value="Кыргызстан">Кыргызстан</option>
+            <option value="Таджикистан">Таджикистан</option>
+            <option value="Узбекистан">Узбекистан</option>
+            <option value="Молдова">Молдова</option>
+            <option value="Грузия">Грузия</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="city">Город</label>
+        <div class="input-with-icon">
+          <img src="{{ url_for('static', filename='image/img_10.png') }}" class="field-icon" alt="">
+          <select name="city" id="city" class="input">
+            <option value="">Выберите город</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>{{ form.height.label.text }}</label>
+        <div class="input-with-icon">
+          <img src="{{ url_for('static', filename='image/img_12.png') }}" class="field-icon" alt="">
+          {{ form.height(class="input", id="height") }}
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="zodiac_sign">Знак зодиака</label>
+        <div class="input-with-icon">
+          <img src="{{ url_for('static', filename='image/img_13.png') }}" class="field-icon" alt="">
+          <select name="zodiac_sign" id="zodiac_sign" class="input">
+            <option value="">Выберите знак зодиака</option>
+            <option value="Овен">♈ Овен (21.03 – 19.04)</option>
+            <option value="Телец">♉ Телец (20.04 – 20.05)</option>
+            <option value="Близнецы">♊ Близнецы (21.05 – 20.06)</option>
+            <option value="Рак">♋ Рак (21.06 – 22.07)</option>
+            <option value="Лев">♌ Лев (23.07 – 22.08)</option>
+            <option value="Дева">♍ Дева (23.08 – 22.09)</option>
+            <option value="Весы">♎ Весы (23.09 – 22.10)</option>
+            <option value="Скорпион">♏ Скорпион (23.10 – 21.11)</option>
+            <option value="Стрелец">♐ Стрелец (22.11 – 21.12)</option>
+            <option value="Козерог">♑ Козерог (22.12 – 19.01)</option>
+            <option value="Водолей">♒ Водолей (20.01 – 18.02)</option>
+            <option value="Рыбы">♓ Рыбы (19.02 – 20.03)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>{{ form.interests.label.text }}</label>
+        <div class="input-with-icon">
+          <img src="{{ url_for('static', filename='image/img_14.png') }}" class="field-icon" alt="">
+          {{ form.interests(class="textarea", id="interests") }}
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>{{ form.description.label.text }}</label>
+        <div class="input-with-icon">
+          <img src="{{ url_for('static', filename='image/img_15.png') }}" class="field-icon" alt="">
+          {{ form.description(class="textarea", id="description") }}
+        </div>
+      </div>
+
       <div class="form-group centered-button">
         <label class="additional-photos-button">
           Добавить дополнительные фото
@@ -50,7 +131,6 @@
         </label>
       </div>
 
-      <!-- Кнопка "Создать анкету" -->
       <div class="form-group centered-button">
         {{ form.submit(class="submit-btn") }}
       </div>
