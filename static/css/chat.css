@@ -140,3 +140,27 @@ body {
   clip: rect(0, 0, 0, 0);
   border: 0;
 }
+
+/* ✅ Онлайн/оффлайн статус под аватаркой */
+.avatar-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.status-dot {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+}
+
+.online {
+  background-color: #28a745;
+}
+
+.offline {
+  background-color: #ccc;
+}

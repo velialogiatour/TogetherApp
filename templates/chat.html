@@ -18,7 +18,7 @@
   <div class="chat-container">
     <!-- Верхняя панель с фото и именем -->
     <div class="chat-header">
-      <a href="{{ url_for('view_profile', id=other_user.id) }}">
+      <a href="{{ url_for('view_profile', id=other_user.id) }}" class="avatar-wrapper">
         <img
           src="{{
             url_for('static', filename=other_user.questionnaire.profile_photo.replace('static/', '').replace('\\', '/'))
@@ -28,6 +28,11 @@
           alt="Фото профиля"
           class="chat-avatar"
         />
+        {% if is_online(other_user) %}
+          <span class="status-dot online" title="Онлайн"></span>
+        {% else %}
+          <span class="status-dot offline" title="Не в сети"></span>
+        {% endif %}
       </a>
       <div class="chat-username">{{ other_user.name }}</div>
     </div>
