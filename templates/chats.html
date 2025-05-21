@@ -30,7 +30,14 @@
             <a href="{{ url_for('chat', user_id=user.id) }}" class="chat-link">
               <img src="{{ user.questionnaire.profile_photo or url_for('static', filename='img/avatar_placeholder.png') }}" alt="Аватар {{ user.name }}" class="avatar">
               <div class="chat-info">
-                <div class="chat-name">{{ user.name }}</div>
+                <div class="chat-name">
+                  {{ user.name }}
+                  {% if is_online(user) %}
+                    <span class="status-dot online" title="Онлайн"></span>
+                  {% else %}
+                    <span class="status-dot offline" title="Не в сети"></span>
+                  {% endif %}
+                </div>
                 <div class="chat-preview">
                   <span class="message-text">{{ user.last_message }}</span>
                   {% if user.last_message_time %}
