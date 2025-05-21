@@ -15,6 +15,7 @@ from forms import RegisterForm, LoginForm, ForgotPasswordForm, ResetPasswordForm
 from models import db, User, PasswordResetToken, Like, Messages, Questionnaire, Matches
 from toxic_filter import is_offensive
 
+
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
@@ -28,6 +29,7 @@ app.config['MAIL_USERNAME'] = 'your-email@example.com'
 app.config['MAIL_PASSWORD'] = 'your-email-password'
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 mail = Mail(app)
+
 
 
 @app.route('/')
@@ -614,7 +616,6 @@ def send_message():
 
 
 
-
 @app.route("/chat_updates/<int:user_id>")
 def chat_updates(user_id):
     if "user_id" not in session:
@@ -637,6 +638,22 @@ def chat_updates(user_id):
         } for m in messages
     ])
 
+
+@app.before_request
+def update_last_seen():
+    if 'user_id' in session:
+        user = db.session.get(User, session['user_id'])  # ← вот тут
+        if user:
+            user.last_seen = datetime.now(timezone.utc)
+            db.session.commit()
+
+
+def is_online(user):
+    if user.last_seen:
+        return datetime.now(timezone.utc) - user.last_seen < timedelta(minutes=5)
+    return False
+
+app.jinja_env.globals['is_online'] = is_online
 
 
 @app.route('/user_profile')
