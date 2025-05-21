@@ -12,6 +12,8 @@ class User(db.Model):
     name = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(256), nullable=False)
+    last_seen = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+
 
     def set_password(self, password):
         """Хэширование пароля перед сохранением"""
