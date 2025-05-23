@@ -14,7 +14,6 @@
     <a href="{{ url_for('basepage') }}">&#8592;</a>
   </div>
 
-  <!-- Всплывающее уведомление -->
   <div id="toast-container"></div>
 
   <div class="profile-container">
@@ -22,17 +21,17 @@
     <!-- Фото профиля -->
     <div class="photo-section">
       <img src="{{ url_for('static', filename=profile.profile_photo.split('static/')[-1].replace('\\', '/')) }}"
-           alt="Фото профиля пользователя" class="main-photo">
+           alt="Фото профиля пользователя"
+           class="main-photo previewable"
+           onclick="openPhoto(this.src)">
       <h2 class="name-age">{{ profile.user.name }}, {{ profile.age }}</h2>
     </div>
 
-    <!-- Основной блок анкеты -->
+    <!-- Анкета -->
     <form class="profile-info-form" disabled>
       <div class="form-layout">
 
-        <!-- Левая часть: поля анкеты -->
         <div class="form-fields">
-
           <div class="form-group">
             <img src="{{ url_for('static', filename='image/img_9.png') }}" class="icon" alt="Пол">
             <span class="label">Пол:</span>
@@ -74,14 +73,14 @@
             <span class="label">О себе:</span>
             <p>{{ profile.description }}</p>
           </div>
-
         </div>
 
-        <!-- Правая часть: дополнительное фото -->
+        <!-- Фото справа -->
         <div class="side-photo">
           {% if profile.additional_photos %}
           <img src="{{ url_for('static', filename=profile.additional_photos[0].split('static/')[-1].replace('\\', '/')) }}"
-               alt="Дополнительное фото" class="mini-additional-photo"
+               alt="Дополнительное фото"
+               class="mini-additional-photo previewable"
                onclick="openPhoto(this.src)">
           {% endif %}
         </div>
@@ -89,33 +88,35 @@
       </div>
     </form>
 
-    <!-- Кнопки действий -->
+    <!-- Кнопки -->
     <div class="action-buttons">
       <form id="like-form" data-user-id="{{ profile.user.id }}">
         <button type="button" class="like-button" title="Поставить лайк">
-          <img src="{{ url_for('static', filename='image/img_7.png') }}" alt="Кнопка лайка">
+          <img src="{{ url_for('static', filename='image/img_7.png') }}" alt="Лайк">
         </button>
       </form>
 
       <form id="block-form" data-user-id="{{ profile.user.id }}">
         <button type="button" class="block-button-img" title="Заблокировать">
-          <img src="{{ url_for('static', filename='image/img_8.png') }}" alt="Кнопка блокировки">
+          <img src="{{ url_for('static', filename='image/img_8.png') }}" alt="Блокировать">
         </button>
       </form>
 
       {% if mutual_like and not is_blocked %}
       <a href="{{ url_for('chat', user_id=profile.user.id) }}" class="chat-button-img" title="Чат">
-        <img src="{{ url_for('static', filename='image/img_16.png') }}" alt="Перейти к чату">
+        <img src="{{ url_for('static', filename='image/img_16.png') }}" alt="Чат">
       </a>
       {% endif %}
     </div>
   </div>
 
-  <!-- Оверлей увеличенного фото -->
-  <div id="overlay" onclick="closePhoto()">
-    <img id="overlay-img" src="" alt="Фото в полном размере">
+  <!-- Модальное фото -->
+  <div id="photoModal" class="modal">
+    <span class="modal-close" onclick="closePhoto()">&times;</span>
+    <img class="modal-content" id="modalImage" src="" alt="Фото в увеличении">
   </div>
 
   <script src="{{ url_for('static', filename='js/view_profile.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/photo_modal.js') }}"></script>
 </body>
 </html>
