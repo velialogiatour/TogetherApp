@@ -1,10 +1,114 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <title>Title</title>
+  <meta charset="UTF-8" />
+  <title>Личный профиль</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/user_profile.css') }}" />
 </head>
 <body>
 
+  <!-- Верхняя панель -->
+  <div class="top-bar">
+    <a href="{{ url_for('basepage') }}" class="back-arrow">←</a>
+    <div class="menu-icon" id="menuToggle">⋮</div>
+    <div class="dropdown" id="dropdownMenu">
+      <a href="{{ url_for('logout') }}">
+        <img src="{{ url_for('static', filename='image/img_19.png') }}" class="menu-icon-img" alt="Выйти"> Выйти
+      </a>
+      <a href="#" onclick="openModal()">
+        <img src="{{ url_for('static', filename='image/img_20.png') }}" class="menu-icon-img" alt="Удалить аккаунт"> Удалить аккаунт
+      </a>
+      <a href="{{ url_for('blacklist') }}">
+        <img src="{{ url_for('static', filename='image/img_21.png') }}" class="menu-icon-img" alt="Чёрный список"> Чёрный список
+      </a>
+    </div>
+  </div>
+
+  <div class="profile-container">
+    <!-- Аватар -->
+    <div class="avatar-section">
+      <img src="{{ user.questionnaire.profile_photo or url_for('static', filename='img/avatar_placeholder.png') }}"
+           alt="Фото профиля" class="profile-avatar previewable"
+           data-full="{{ user.questionnaire.profile_photo or '' }}" />
+      <h2>{{ user.name }}</h2>
+    </div>
+
+    <!-- Дополнительные фото -->
+    <div class="photos-section">
+      {% for photo in user.questionnaire.additional_photos %}
+        <img src="{{ photo }}" class="additional-photo previewable" alt="Дополнительное фото" data-full="{{ photo }}">
+      {% endfor %}
+    </div>
+
+    <!-- Анкета -->
+    <form id="profileForm" class="profile-form" method="POST" enctype="multipart/form-data">
+      {{ form.hidden_tag() }}
+
+      {% set values = {
+        'age': user.questionnaire.age,
+        'gender': user.questionnaire.gender,
+        'country': user.questionnaire.country,
+        'city': user.questionnaire.city,
+        'height': user.questionnaire.height,
+        'zodiac_sign': user.questionnaire.zodiac_sign,
+        'interests': user.questionnaire.interests,
+        'description': user.questionnaire.description
+      } %}
+
+      {% for field in [
+        ('age', 'Возраст', 'img_18.png'),
+        ('gender', 'Пол', 'img_9.png'),
+        ('country', 'Страна', 'img_11.png'),
+        ('city', 'Город', 'img_10.png'),
+        ('height', 'Рост', 'img_12.png'),
+        ('zodiac_sign', 'Знак зодиака', 'img_13.png'),
+        ('interests', 'Интересы', 'img_14.png'),
+        ('description', 'Описание', 'img_15.png')
+      ] %}
+        <div class="profile-field input-with-icon">
+          <img src="{{ url_for('static', filename='image/' ~ field[2]) }}" class="field-icon" alt="{{ field[1] }}">
+          <label>{{ field[1] }}</label>
+          <span data-field="{{ field[0] }}">{{ values[field[0]] }}</span>
+        </div>
+      {% endfor %}
+
+      <div class="buttons">
+        <button type="button" id="editBtn">Редактировать</button>
+        <button type="submit" id="saveBtn" style="display:none;">Сохранить</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Просмотр фото в увеличении -->
+  <div id="photoModal" class="modal">
+    <span class="modal-close">×</span>
+    <img class="modal-content" id="modalImage" alt="Фото в увеличении" src="">
+  </div>
+
+  <!-- Модальное окно подтверждения удаления аккаунта -->
+  <div id="confirmModal" class="confirm-modal">
+    <div class="modal-box">
+      <p class="modal-text">Вы точно хотите удалить аккаунт?</p>
+      <div class="modal-buttons">
+        <form method="POST" action="{{ url_for('delete_account') }}">
+          {{ delete_form.hidden_tag() }}
+          <button type="submit" class="btn-confirm">Да</button>
+        </form>
+        <button class="btn-cancel" onclick="closeModal()">Нет</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="{{ url_for('static', filename='js/user_profile.js') }}"></script>
+  <script>
+    function openModal() {
+      document.getElementById("confirmModal").style.display = "flex";
+    }
+    function closeModal() {
+      document.getElementById("confirmModal").style.display = "none";
+    }
+  </script>
 </body>
 </html>
