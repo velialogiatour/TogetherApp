@@ -60,3 +60,7 @@ class QuestionnaireForm(FlaskForm):
     additional_photos = MultipleFileField('Дополнительные фото', validators=[FileAllowed(['jpg', 'jpeg', 'png'], 'Только изображения')])
 
     submit = SubmitField('Создать анкету')
+
+
+class ConfirmDeleteForm(FlaskForm):
+    submit = SubmitField("Удалить аккаунт")
