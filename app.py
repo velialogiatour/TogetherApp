@@ -11,7 +11,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 
 from config import Connect
-from forms import RegisterForm, LoginForm, ForgotPasswordForm, ResetPasswordForm, QuestionnaireForm
+from forms import RegisterForm, LoginForm, ForgotPasswordForm, ResetPasswordForm, QuestionnaireForm, ConfirmDeleteForm
 from models import db, User, PasswordResetToken, Like, Messages, Questionnaire, Matches
 from toxic_filter import is_offensive
 
@@ -85,7 +85,7 @@ def login():
                 if user and check_password_hash(user.password_hash, form.password.data):
                     session["user_id"] = user.id
                     session['login_attempts'] = 0
-                    flash("Вход выполнен успешно!", "success")
+                    session["just_logged_in"] = True  # вместо flash
                     return redirect(url_for("basepage"))
                 else:
                     session['login_attempts'] += 1
@@ -281,9 +281,21 @@ def basepage():
     user_id = session['user_id']
     matched_ids = get_matched_user_ids(user_id)
 
+    # 🔒 Получить id всех, кого я заблокировал или кто заблокировал меня
+    blocked_ids_query = db.session.query(Like.liked_user_id).filter(
+        Like.user_id == user_id, Like.is_blocked == True
+    ).union(
+        db.session.query(Like.user_id).filter(
+            Like.liked_user_id == user_id, Like.is_blocked == True
+        )
+    )
+    blocked_ids = [id for (id,) in blocked_ids_query.all()]
+
+    # Базовый запрос
     query = Questionnaire.query.filter(
         Questionnaire.user_id != user_id,
-        ~Questionnaire.user_id.in_(matched_ids)
+        ~Questionnaire.user_id.in_(matched_ids),
+        ~Questionnaire.user_id.in_(blocked_ids)  # 🚫 исключаем заблокированных
     )
 
     # Поисковый запрос
@@ -297,7 +309,7 @@ def basepage():
             )
         )
 
-    # Пол (gender)
+    # Пол
     gender = request.args.get('gender')
     if gender:
         query = query.filter_by(gender=gender)
@@ -338,7 +350,12 @@ def basepage():
         query = query.filter(Questionnaire.interests.ilike(f'%{interests}%'))
 
     profiles = query.all()
+
+    if session.pop('just_logged_in', False):
+        flash("Вход выполнен успешно!", "success")
+
     return render_template('basepage.html', profiles=profiles)
+
 
 
 @app.route('/basepage_data')
@@ -347,14 +364,28 @@ def basepage_data():
         return jsonify([])
 
     user_id = session['user_id']
+
+    # 🔒 Получаем ID заблокированных и блокирующих
+    blocked_ids_query = db.session.query(Like.liked_user_id).filter(
+        Like.user_id == user_id, Like.is_blocked == True
+    ).union(
+        db.session.query(Like.user_id).filter(
+            Like.liked_user_id == user_id, Like.is_blocked == True
+        )
+    )
+    blocked_ids = [id for (id,) in blocked_ids_query.all()]
+
+    # 🧩 И ID совпадений (если нужно исключать matched)
     matched_ids = get_matched_user_ids(user_id)
 
+    # 🧠 Основной запрос
     query = Questionnaire.query.filter(
         Questionnaire.user_id != user_id,
-        ~Questionnaire.user_id.in_(matched_ids)
+        ~Questionnaire.user_id.in_(matched_ids),
+        ~Questionnaire.user_id.in_(blocked_ids)  # ❗ исключаем блокированных
     )
 
-    # Поиск по слову
+    # Поиск
     keyword = request.args.get('query', '').strip().lower()
     if keyword:
         query = query.filter(
@@ -404,8 +435,8 @@ def basepage_data():
     page = request.args.get('page', 1, type=int)
     per_page = 10
     paginated = query.paginate(page=page, per_page=per_page, error_out=False)
-    results = []
 
+    results = []
     for profile in paginated.items:
         results.append({
             "id": profile.id,
@@ -416,6 +447,9 @@ def basepage_data():
             "zodiac_sign": profile.zodiac_sign,
             "profile_photo": profile.profile_photo
         })
+
+    return jsonify(results)
+
 
 
 @app.route('/api/unread_counts')
@@ -516,7 +550,10 @@ def likes_page():
     matched_ids = get_matched_user_ids(user_id)
     matches = User.query.filter(User.id.in_(matched_ids)).all()
 
-    # Сброс флага новых лайков
+    # 🟢 Проверка: есть ли новые лайки
+    new_likes_exist = Like.query.filter_by(liked_user_id=user_id, is_new=True).count() > 0
+
+    # 🔄 Сброс флага новых лайков
     Like.query.filter_by(liked_user_id=user_id, is_new=True).update({'is_new': False})
     db.session.commit()
 
@@ -524,8 +561,10 @@ def likes_page():
         "likes.html",
         liked_users=liked_users,
         users_who_liked_me=users_who_liked_me,
-        matches=matches
+        matches=matches,
+        new_likes_exist=new_likes_exist  # ⬅️ передаём флаг в шаблон
     )
+
 
 
 
@@ -565,13 +604,25 @@ def chat(user_id):
 
     current_user_id = session['user_id']
 
+    #Проверка блокировки между пользователями (в обе стороны)
+    is_blocked = Like.query.filter(
+        ((Like.user_id == current_user_id) & (Like.liked_user_id == user_id) & (Like.is_blocked == True)) |
+        ((Like.user_id == user_id) & (Like.liked_user_id == current_user_id) & (Like.is_blocked == True))
+    ).first()
+
+    if is_blocked:
+        flash("Вы не можете переписываться с этим пользователем.", "danger")
+        return redirect(url_for('chats'))
+
+    # Отметить входящие сообщения как прочитанные
     unread_messages = Messages.query.filter_by(sender_id=user_id, receiver_id=current_user_id, is_read=False).all()
     for msg in unread_messages:
         msg.is_read = True
     db.session.commit()
 
-    other_user = db.session.get(User, user_id)  # <-- получаем пользователя
-    return render_template("chat.html", other_user=other_user)  # <-- передаём его сюда
+    other_user = db.session.get(User, user_id)
+    return render_template("chat.html", other_user=other_user)
+
 
 
 @csrf.exempt
@@ -580,26 +631,30 @@ def send_message():
     if "user_id" not in session:
         return jsonify({"error": "Unauthorized"}), 401
 
-    # print("DEBUG: request.form =", request.form)
-
     sender_id = session["user_id"]
     receiver_id = request.form.get("receiver_id", type=int)
     content = request.form.get("message", "").strip()
 
-    # print("DEBUG: receiver_id =", receiver_id)
-    # print("DEBUG: content =", content)
-
     if not receiver_id or not content:
         return jsonify({"error": "Сообщение содержит недопустимый контент"}), 400
 
-    # Проверка на взаимный лайк
+    #Проверка блокировки (в обе стороны)
+    is_blocked = Like.query.filter(
+        ((Like.user_id == sender_id) & (Like.liked_user_id == receiver_id) & (Like.is_blocked == True)) |
+        ((Like.user_id == receiver_id) & (Like.liked_user_id == sender_id) & (Like.is_blocked == True))
+    ).first()
+
+    if is_blocked:
+        return jsonify({"error": "Сообщения между вами недоступны."}), 403
+
+    #Проверка на взаимный лайк
     match1 = Like.query.filter_by(user_id=sender_id, liked_user_id=receiver_id).first()
     match2 = Like.query.filter_by(user_id=receiver_id, liked_user_id=sender_id).first()
 
     if not (match1 and match2):
         return jsonify({"error": "Можно писать сообщения только при взаимной симпатии."}), 403
 
-    # Фильтрация токсичности
+    # ✅ Фильтрация токсичности
     if is_offensive(content):
         return jsonify({"error": "Сообщение содержит недопустимый контент."}), 400
 
@@ -656,10 +711,112 @@ def is_online(user):
 app.jinja_env.globals['is_online'] = is_online
 
 
-@app.route('/user_profile')
+@app.route('/user_profile', methods=['GET', 'POST'])
 def user_profile():
-    return render_template('user_profile.html')
+    if 'user_id' not in session:
+        flash("Сначала войдите в аккаунт", "warning")
+        return redirect(url_for('login'))
 
+    user_id = session['user_id']
+    user = db.session.get(User, user_id)
+
+    if not user or not user.questionnaire:
+        flash("Анкета не найдена", "danger")
+        return redirect(url_for('basepage'))
+
+    form = QuestionnaireForm(obj=user.questionnaire)
+    delete_form = ConfirmDeleteForm()
+
+    if request.method == 'POST':
+        if delete_form.validate_on_submit() and 'submit' in request.form:
+            db.session.delete(user)
+            db.session.commit()
+            session.clear()
+            flash("Аккаунт удалён", "info")
+            return redirect(url_for("register"))
+
+        if form.validate_on_submit():
+            q = user.questionnaire
+
+            if 'age' in request.form:
+                q.age = form.age.data
+
+            if 'gender' in request.form:
+                q.gender = form.gender.data
+
+            if 'country' in request.form:
+                q.country = form.country.data
+
+            if 'city' in request.form:
+                q.city = form.city.data
+
+            if 'height' in request.form:
+                q.height = form.height.data
+
+            if 'zodiac_sign' in request.form:
+                q.zodiac_sign = form.zodiac_sign.data
+
+            if 'interests' in request.form:
+                q.interests = form.interests.data
+
+            if 'description' in request.form:
+                q.description = form.description.data
+
+            db.session.commit()
+            flash("Анкета обновлена", "success")
+            return redirect(url_for('user_profile'))
+
+    return render_template("user_profile.html", user=user, form=form, delete_form=delete_form)
+
+
+
+@app.route('/blacklist')
+def blacklist():
+    if 'user_id' not in session:
+        flash("Сначала войдите в аккаунт", "warning")
+        return redirect(url_for('login'))
+
+    user_id = session['user_id']
+    blocked = Like.query.filter_by(user_id=user_id, is_blocked=True).all()
+    blocked_user_ids = [like.liked_user_id for like in blocked]
+    blocked_users = User.query.filter(User.id.in_(blocked_user_ids)).all()
+
+    return render_template("blacklist.html", blocked_users=blocked_users)
+
+
+@app.route('/logout')
+def logout():
+    flash("Вы вышли из аккаунта", "info")
+    session.clear()  # очищаем после flash
+    return redirect(url_for('login'))
+
+
+
+
+@app.route('/delete_account', methods=['POST'])
+def delete_account():
+    if 'user_id' not in session:
+        flash("Сначала войдите в аккаунт", "warning")
+        return redirect(url_for('login'))
+
+    user_id = session['user_id']
+    user = db.session.get(User, user_id)
+
+    if not user:
+        flash("Пользователь не найден", "danger")
+        return redirect(url_for('login'))
+
+    # Удаляем анкету
+    if user.questionnaire:
+        db.session.delete(user.questionnaire)
+
+    # Удаляем пользователя
+    db.session.delete(user)
+    db.session.commit()
+
+    session.clear()
+    flash("Аккаунт удалён", "info")
+    return redirect(url_for('register'))
 
 
 @app.route('/view_profile/<int:id>')
@@ -669,6 +826,16 @@ def view_profile(id):
 
     current_user_id = session['user_id']
     profile = Questionnaire.query.get_or_404(id)
+
+    # Проверка блокировки (в обе стороны)
+    is_blocked = Like.query.filter(
+        ((Like.user_id == current_user_id) & (Like.liked_user_id == profile.user_id) & (Like.is_blocked == True)) |
+        ((Like.user_id == profile.user_id) & (Like.liked_user_id == current_user_id) & (Like.is_blocked == True))
+    ).first()
+
+    if is_blocked:
+        flash("Вы не можете просматривать эту анкету.", "warning")
+        return redirect(url_for('basepage'))
 
     # Проверка взаимного лайка
     like_from_me = Like.query.filter_by(user_id=current_user_id, liked_user_id=profile.user_id).first()
@@ -699,6 +866,7 @@ def block_user(user_id):
     return redirect(url_for('view_profile', id=user_id))
 
 
+@csrf.exempt
 @app.route('/unblock/<int:user_id>', methods=['POST'])
 def unblock_user(user_id):
     if 'user_id' not in session:
@@ -717,7 +885,6 @@ def unblock_user(user_id):
         flash("Этот пользователь не был заблокирован.", "warning")
 
     return redirect(url_for('user_profile'))
-
 
 
 
