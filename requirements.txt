@@ -12,4 +12,4 @@ Flask-Mail
 SQLAlchemy~=2.0.40
 scikit-learn
 joblib
-
+pandas
