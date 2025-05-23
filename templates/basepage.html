@@ -14,7 +14,7 @@
     {% if messages %}
       <div class="flash-container">
         {% for category, message in messages %}
-          <div class="flash success">Вход выполнен успешно!</div>
+          <div class="flash {{ category }}">{{ message }}</div>
         {% endfor %}
       </div>
     {% endif %}
