@@ -19,7 +19,12 @@
     <!-- Кнопки вкладок -->
     <div class="tab-buttons">
         <button class="tab-btn active" data-tab="liked">Я лайкнул</button>
-        <button class="tab-btn" data-tab="likedme">Меня лайкнули</button>
+        <button class="tab-btn" data-tab="likedme">
+            Меня лайкнули
+            {% if new_likes_exist %}
+                <span class="red-dot"></span>
+            {% endif %}
+        </button>
         <button class="tab-btn" data-tab="matches">Совпадения</button>
     </div>
 

@@ -9,7 +9,16 @@ document.addEventListener('DOMContentLoaded', function () {
 
             this.classList.add('active');
             document.getElementById('tab-' + this.dataset.tab).classList.add('active');
+
+            // Удалить красную точку, если нажата вкладка "Меня лайкнули"
+            if (this.dataset.tab === 'likedme') {
+                const dot = this.querySelector('.red-dot');
+                if (dot) {
+                    dot.remove();
+                }
+            }
         });
     });
 });
+
 
