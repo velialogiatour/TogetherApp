@@ -256,3 +256,10 @@ body {
   background-color: red;
   border-radius: 50%;
 }
+/* Совпадение: процент мэтча */
+.match-probability {
+  margin-top: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #F0705A; /* акцентный тёплый цвет, как в других местах */
+}
