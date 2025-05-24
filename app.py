@@ -14,6 +14,7 @@ from config import Connect
 from forms import RegisterForm, LoginForm, ForgotPasswordForm, ResetPasswordForm, QuestionnaireForm, ConfirmDeleteForm
 from models import db, User, PasswordResetToken, Like, Messages, Questionnaire, Matches
 from toxic_filter import is_offensive
+from ml_matching import predict_match
 
 
 logger = logging.getLogger(__name__)
@@ -281,7 +282,7 @@ def basepage():
     user_id = session['user_id']
     matched_ids = get_matched_user_ids(user_id)
 
-    # 🔒 Получить id всех, кого я заблокировал или кто заблокировал меня
+
     blocked_ids_query = db.session.query(Like.liked_user_id).filter(
         Like.user_id == user_id, Like.is_blocked == True
     ).union(
@@ -291,14 +292,30 @@ def basepage():
     )
     blocked_ids = [id for (id,) in blocked_ids_query.all()]
 
-    # Базовый запрос
+
+    my_questionnaire = Questionnaire.query.filter_by(user_id=user_id).first()
+    if not my_questionnaire:
+        flash("Сначала создайте анкету.", "warning")
+        return redirect(url_for('questionary'))
+
+    def to_dict(q):
+        return {
+            'age': q.age,
+            'gender': q.gender,
+            'country': q.country,
+            'city': q.city,
+            'height': q.height,
+            'zodiac_sign': q.zodiac_sign,
+            'interests': q.interests
+        }
+
     query = Questionnaire.query.filter(
         Questionnaire.user_id != user_id,
         ~Questionnaire.user_id.in_(matched_ids),
-        ~Questionnaire.user_id.in_(blocked_ids)  # 🚫 исключаем заблокированных
+        ~Questionnaire.user_id.in_(blocked_ids)
     )
 
-    # Поисковый запрос
+
     keyword = request.args.get('query', '').strip().lower()
     if keyword:
         query = query.filter(
@@ -309,12 +326,10 @@ def basepage():
             )
         )
 
-    # Пол
     gender = request.args.get('gender')
     if gender:
         query = query.filter_by(gender=gender)
 
-    # Возраст
     age_from = request.args.get('ageFrom', type=int)
     age_to = request.args.get('ageTo', type=int)
     if age_from:
@@ -322,7 +337,6 @@ def basepage():
     if age_to:
         query = query.filter(Questionnaire.age <= age_to)
 
-    # Страна и город
     country = request.args.get('country', '').strip()
     if country:
         query = query.filter(Questionnaire.country.ilike(f'%{country}%'))
@@ -331,7 +345,6 @@ def basepage():
     if city:
         query = query.filter(Questionnaire.city.ilike(f'%{city}%'))
 
-    # Рост
     height_from = request.args.get('heightFrom', type=int)
     height_to = request.args.get('heightTo', type=int)
     if height_from:
@@ -339,23 +352,69 @@ def basepage():
     if height_to:
         query = query.filter(Questionnaire.height <= height_to)
 
-    # Знак зодиака
     zodiac = request.args.get('zodiac_sign', '').strip()
     if zodiac:
         query = query.filter(Questionnaire.zodiac_sign.ilike(f'%{zodiac}%'))
 
-    # Интересы
     interests = request.args.get('interests', '').strip()
     if interests:
         query = query.filter(Questionnaire.interests.ilike(f'%{interests}%'))
 
-    profiles = query.all()
+    raw_profiles = query.all()
+
+
+    my_dict = to_dict(my_questionnaire)
+    profiles_with_scores = []
+    for q in raw_profiles:
+        other_dict = to_dict(q)
+        score = predict_match(my_dict, other_dict)
+        profiles_with_scores.append((q, score))
+
+
+    profiles_with_scores.sort(key=lambda tup: tup[1], reverse=True)
+
+
+    profiles = []
+    for q, score in profiles_with_scores:
+        q.match_probability = round(score * 100)  # В процентах
+        profiles.append(q)
 
     if session.pop('just_logged_in', False):
         flash("Вход выполнен успешно!", "success")
 
     return render_template('basepage.html', profiles=profiles)
 
+
+
+@app.route('/match_probability/<int:other_user_id>')
+def match_probability(other_user_id):
+    current_user_id = session.get('user_id')
+    if not current_user_id:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    if current_user_id == other_user_id:
+        return jsonify({'error': 'Нельзя сравнивать с собой'}), 400
+
+    user1 = Questionnaire.query.filter_by(user_id=current_user_id).first()
+    user2 = Questionnaire.query.filter_by(user_id=other_user_id).first()
+
+    if not user1 or not user2:
+        return jsonify({'error': 'Анкета не найдена'}), 404
+
+    # Преобразуем в словари с нужными полями
+    def to_dict(q):
+        return {
+            'age': q.age,
+            'gender': q.gender,
+            'country': q.country,
+            'city': q.city,
+            'height': q.height,
+            'zodiac_sign': q.zodiac_sign,
+            'interests': q.interests,
+        }
+
+    prob = predict_match(to_dict(user1), to_dict(user2))
+    return jsonify({'match_probability': round(prob, 3)})
 
 
 @app.route('/basepage_data')
@@ -550,10 +609,10 @@ def likes_page():
     matched_ids = get_matched_user_ids(user_id)
     matches = User.query.filter(User.id.in_(matched_ids)).all()
 
-    # 🟢 Проверка: есть ли новые лайки
+
     new_likes_exist = Like.query.filter_by(liked_user_id=user_id, is_new=True).count() > 0
 
-    # 🔄 Сброс флага новых лайков
+
     Like.query.filter_by(liked_user_id=user_id, is_new=True).update({'is_new': False})
     db.session.commit()
 
@@ -647,14 +706,13 @@ def send_message():
     if is_blocked:
         return jsonify({"error": "Сообщения между вами недоступны."}), 403
 
-    #Проверка на взаимный лайк
+
     match1 = Like.query.filter_by(user_id=sender_id, liked_user_id=receiver_id).first()
     match2 = Like.query.filter_by(user_id=receiver_id, liked_user_id=sender_id).first()
 
     if not (match1 and match2):
         return jsonify({"error": "Можно писать сообщения только при взаимной симпатии."}), 403
 
-    # ✅ Фильтрация токсичности
     if is_offensive(content):
         return jsonify({"error": "Сообщение содержит недопустимый контент."}), 400
 
