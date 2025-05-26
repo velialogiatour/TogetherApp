@@ -77,8 +77,8 @@
 
         <!-- Фото справа -->
         <div class="side-photo">
-          {% if profile.additional_photos %}
-          <img src="{{ url_for('static', filename=profile.additional_photos[0].split('static/')[-1].replace('\\', '/')) }}"
+          {% if profile.additional_photo %}
+          <img src="{{ url_for('static', filename=profile.additional_photo.split('static/')[-1].replace('\\', '/')) }}"
                alt="Дополнительное фото"
                class="mini-additional-photo previewable"
                onclick="openPhoto(this.src)">

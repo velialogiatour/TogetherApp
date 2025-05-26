@@ -35,12 +35,16 @@
       <h2>{{ user.name }}</h2>
     </div>
 
-    <!-- Дополнительные фото -->
-    <div class="photos-section">
-      {% for photo in user.questionnaire.additional_photos %}
-        <img src="{{ photo }}" class="additional-photo previewable" alt="Дополнительное фото" data-full="{{ photo }}">
-      {% endfor %}
-    </div>
+    <!-- Дополнительное фото -->
+<div class="photos-section">
+  {% if user.questionnaire.additional_photo %}
+    <img src="{{ url_for('static', filename=user.questionnaire.additional_photo.split('static/')[-1].replace('\\', '/')) }}"
+         class="additional-photo previewable"
+         alt="Дополнительное фото"
+         data-full="{{ url_for('static', filename=user.questionnaire.additional_photo.split('static/')[-1].replace('\\', '/')) }}">
+  {% endif %}
+</div>
+
 
     <!-- Анкета -->
     <form id="profileForm" class="profile-form" method="POST" enctype="multipart/form-data">
