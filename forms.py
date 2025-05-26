@@ -1,7 +1,7 @@
 from flask_wtf import FlaskForm
 from wtforms import PasswordField, BooleanField, StringField, IntegerField, TextAreaField, SelectField, SubmitField
 from wtforms.validators import DataRequired, Length, Email, ValidationError, EqualTo, NumberRange
-from flask_wtf.file import FileField, FileAllowed, MultipleFileField
+from flask_wtf.file import FileField, FileAllowed
 from models import User
 
 
@@ -57,7 +57,8 @@ class QuestionnaireForm(FlaskForm):
     description = TextAreaField('О себе')
 
     profile_photo = FileField('Фото профиля', validators=[FileAllowed(['jpg', 'jpeg', 'png'], 'Только изображения')])
-    additional_photos = MultipleFileField('Дополнительные фото', validators=[FileAllowed(['jpg', 'jpeg', 'png'], 'Только изображения')])
+    additional_photo = FileField('Дополнительное фото', validators=[FileAllowed(['jpg', 'jpeg', 'png'], 'Только изображения')])
+
 
     submit = SubmitField('Создать анкету')
 
