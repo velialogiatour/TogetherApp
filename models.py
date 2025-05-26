@@ -1,5 +1,4 @@
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.dialects.postgresql import ARRAY
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timezone
 
@@ -34,8 +33,8 @@ class Questionnaire(db.Model):
     gender = db.Column(db.String(20), nullable=False)
     country = db.Column(db.String(100), nullable=False)
     city = db.Column(db.String(100), nullable=False)
-    profile_photo = db.Column(db.String(255))  # один путь к главному фото
-    additional_photos = db.Column(ARRAY(db.String))  # массив путей к дополнительным фото
+    profile_photo = db.Column(db.String(255))
+    additional_photo = db.Column(db.String(255))
     description = db.Column(db.Text)
     interests = db.Column(db.Text)
     zodiac_sign = db.Column(db.String(20))
@@ -44,11 +43,15 @@ class Questionnaire(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, unique=True)
     user = db.relationship('User', backref=db.backref('questionnaire', uselist=False))
 
+
 class PasswordResetToken(db.Model):
+    __tablename__ = 'password_reset_token'
+
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     token = db.Column(db.String(100), unique=True, nullable=False)
     expires_at = db.Column(db.DateTime, nullable=False)
+
 
 class Like(db.Model):
     __tablename__ = 'likes'
@@ -60,7 +63,7 @@ class Like(db.Model):
     is_blocked = db.Column(db.Boolean, default=False)
     is_new = db.Column(db.Boolean, default=True)
 
-    # Ограничение уникальности: один лайк от user_id к liked_user_id
+
     __table_args__ = (
         db.UniqueConstraint('user_id', 'liked_user_id', name='unique_like'),
     )
@@ -83,22 +86,19 @@ class Messages(db.Model):
     receiver = db.relationship('User', foreign_keys=[receiver_id], backref='received_messages')
 
 
-class Settings(db.Model):
-    __tablename__ = 'settings'
-
-    setting_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, unique=True)
-
-    is_deactivated = db.Column(db.Boolean, default=False)  # деактивация аккаунта
-    notifications_enabled = db.Column(db.Boolean, default=True)  # включены ли уведомления
-
-    user = db.relationship('User', backref=db.backref('settings', uselist=False))
-
-
 class Matches(db.Model):
     __tablename__ = 'matches'
 
     match_id = db.Column(db.Integer, primary_key=True)
     user_one_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     user_two_id = db.Column(db.Integer, db.ForeignKey('users.id'))
-    matched_ad = db.Column(db.String)
+    matched_ad = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+
+
+class DeletedUserLog(db.Model):
+    __tablename__ = 'deleted_users_log'
+
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(120))
+    name = db.Column(db.String(100))
+    deleted_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
