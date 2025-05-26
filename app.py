@@ -12,7 +12,7 @@ from werkzeug.utils import secure_filename
 
 from config import Connect
 from forms import RegisterForm, LoginForm, ForgotPasswordForm, ResetPasswordForm, QuestionnaireForm, ConfirmDeleteForm
-from models import db, User, PasswordResetToken, Like, Messages, Questionnaire, Matches
+from models import db, User, PasswordResetToken, Like, Messages, Questionnaire, Matches, DeletedUserLog
 from toxic_filter import is_offensive
 from ml_matching import predict_match
 
@@ -235,7 +235,7 @@ def questionary():
 
     if form.validate_on_submit():
         profile_photo_path = None
-        additional_photos_paths = []
+        additional_photo_path = None  # Теперь одно фото
 
         # Сохранение фото профиля
         if form.profile_photo.data:
@@ -243,14 +243,14 @@ def questionary():
             profile_photo_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             form.profile_photo.data.save(profile_photo_path)
 
-        # Сохранение дополнительных фото
-        if form.additional_photos.data:
-            for file in form.additional_photos.data:
-                if file.filename:
-                    fname = secure_filename(file.filename)
-                    full_path = os.path.join(app.config['UPLOAD_FOLDER'], fname)
-                    file.save(full_path)
-                    additional_photos_paths.append(full_path)
+        # Сохранение одного дополнительного фото
+        if form.additional_photo.data:
+            file = form.additional_photo.data  # Берём только первое
+            if file.filename:
+                fname = secure_filename(file.filename)
+                full_path = os.path.join(app.config['UPLOAD_FOLDER'], fname)
+                file.save(full_path)
+                additional_photo_path = full_path
 
         questionnaire = Questionnaire(
             age=form.age.data,
@@ -262,7 +262,7 @@ def questionary():
             interests=form.interests.data,
             description=form.description.data,
             profile_photo=profile_photo_path,
-            additional_photos=additional_photos_paths,
+            additional_photo=additional_photo_path,  # заменено поле
             user_id=user_id
         )
 
@@ -542,8 +542,19 @@ def like_user(liked_user_id):
         flash("Нельзя лайкнуть себя :)", "info")
         return redirect(request.referrer or url_for('basepage'))
 
-    from models import Matches
+    # Проверка: пользователь не должен быть заблокирован ни с одной стороны
+    is_blocked = Like.query.filter(
+        ((Like.user_id == user_id) & (Like.liked_user_id == liked_user_id) & (Like.is_blocked == True)) |
+        ((Like.user_id == liked_user_id) & (Like.liked_user_id == user_id) & (Like.is_blocked == True))
+    ).first()
 
+    if is_blocked:
+        if request.is_json:
+            return jsonify({"success": False, "message": "Вы не можете лайкать заблокированного пользователя"}), 403
+        flash("Пользователь заблокирован.", "warning")
+        return redirect(request.referrer or url_for('basepage'))
+
+    # Лайк уже существует — удалим его
     existing_like = Like.query.filter_by(user_id=user_id, liked_user_id=liked_user_id).first()
 
     if existing_like:
@@ -563,9 +574,11 @@ def like_user(liked_user_id):
         flash("Лайк удалён", "info")
 
     else:
+        # Создаём новый лайк
         new_like = Like(user_id=user_id, liked_user_id=liked_user_id, is_new=True)
         db.session.add(new_like)
 
+        # Проверяем наличие ответного лайка
         reciprocal_like = Like.query.filter_by(user_id=liked_user_id, liked_user_id=user_id).first()
 
         if reciprocal_like:
@@ -578,7 +591,7 @@ def like_user(liked_user_id):
                 match = Matches(
                     user_one_id=user_id,
                     user_two_id=liked_user_id,
-                    matched_ad="взаимный лайк"
+                    matched_ad=datetime.now(timezone.utc)  # дата совпадения
                 )
                 db.session.add(match)
 
@@ -850,7 +863,6 @@ def logout():
 
 
 
-
 @app.route('/delete_account', methods=['POST'])
 def delete_account():
     if 'user_id' not in session:
@@ -864,17 +876,37 @@ def delete_account():
         flash("Пользователь не найден", "danger")
         return redirect(url_for('login'))
 
-    # Удаляем анкету
+    # Логируем удалённого пользователя
+    log = DeletedUserLog(
+        email=user.email,
+        name=user.name,
+        deleted_at=datetime.now(timezone.utc)
+    )
+    db.session.add(log)
+
+    # Удаляем все связанные данные
+    Like.query.filter(
+        (Like.user_id == user_id) | (Like.liked_user_id == user_id)
+    ).delete(synchronize_session=False)
+
+    Messages.query.filter(
+        (Messages.sender_id == user_id) | (Messages.receiver_id == user_id)
+    ).delete(synchronize_session=False)
+
+    Matches.query.filter(
+        (Matches.user_one_id == user_id) | (Matches.user_two_id == user_id)
+    ).delete(synchronize_session=False)
+
     if user.questionnaire:
         db.session.delete(user.questionnaire)
 
-    # Удаляем пользователя
     db.session.delete(user)
     db.session.commit()
 
     session.clear()
     flash("Аккаунт удалён", "info")
     return redirect(url_for('register'))
+
 
 
 @app.route('/view_profile/<int:id>')
@@ -911,12 +943,27 @@ def block_user(user_id):
 
     current_user_id = session['user_id']
 
+    # Удаляем совпадение, если есть
+    match = Matches.query.filter(
+        ((Matches.user_one_id == current_user_id) & (Matches.user_two_id == user_id)) |
+        ((Matches.user_one_id == user_id) & (Matches.user_two_id == current_user_id))
+    ).first()
+    if match:
+        db.session.delete(match)
+
+    # Удаляем взаимный лайк от второго пользователя
+    reverse_like = Like.query.filter_by(user_id=user_id, liked_user_id=current_user_id).first()
+    if reverse_like:
+        db.session.delete(reverse_like)
+
+    # Либо обновляем, либо создаём лайк с блокировкой
     like = Like.query.filter_by(user_id=current_user_id, liked_user_id=user_id).first()
 
     if like:
         like.is_blocked = True
+        like.is_new = False  # на всякий случай
     else:
-        like = Like(user_id=current_user_id, liked_user_id=user_id, is_blocked=True)
+        like = Like(user_id=current_user_id, liked_user_id=user_id, is_blocked=True, is_new=False)
         db.session.add(like)
 
     db.session.commit()
@@ -936,9 +983,9 @@ def unblock_user(user_id):
     like = Like.query.filter_by(user_id=current_user_id, liked_user_id=user_id).first()
 
     if like and like.is_blocked:
-        like.is_blocked = False
+        db.session.delete(like)  # полностью удаляем лайк с флагом блокировки
         db.session.commit()
-        flash("Пользователь разблокирован.", "info")
+        flash("Пользователь разблокирован и удалён из лайков.", "info")
     else:
         flash("Этот пользователь не был заблокирован.", "warning")
 
