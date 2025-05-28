@@ -542,7 +542,7 @@ def like_user(liked_user_id):
         flash("Нельзя лайкнуть себя :)", "info")
         return redirect(request.referrer or url_for('basepage'))
 
-    # Проверка: пользователь не должен быть заблокирован ни с одной стороны
+    # Проверка блокировок
     is_blocked = Like.query.filter(
         ((Like.user_id == user_id) & (Like.liked_user_id == liked_user_id) & (Like.is_blocked == True)) |
         ((Like.user_id == liked_user_id) & (Like.liked_user_id == user_id) & (Like.is_blocked == True))
@@ -550,17 +550,15 @@ def like_user(liked_user_id):
 
     if is_blocked:
         if request.is_json:
-            return jsonify({"success": False, "message": "Вы не можете лайкать заблокированного пользователя"}), 403
+            return jsonify({"success": False, "message": "Пользователь заблокирован"}), 403
         flash("Пользователь заблокирован.", "warning")
         return redirect(request.referrer or url_for('basepage'))
 
-    # Лайк уже существует — удалим его
     existing_like = Like.query.filter_by(user_id=user_id, liked_user_id=liked_user_id).first()
 
     if existing_like:
         db.session.delete(existing_like)
 
-        # Удаляем матч, если он был
         match = Matches.query.filter(
             ((Matches.user_one_id == user_id) & (Matches.user_two_id == liked_user_id)) |
             ((Matches.user_one_id == liked_user_id) & (Matches.user_two_id == user_id))
@@ -569,38 +567,47 @@ def like_user(liked_user_id):
             db.session.delete(match)
 
         db.session.commit()
+
         if request.is_json:
-            return jsonify({"success": True, "message": "Лайк удалён"})
+            return jsonify({"success": True, "message": "Лайк удалён", "match": False})
         flash("Лайк удалён", "info")
+        return redirect(request.referrer or url_for('basepage'))
 
-    else:
-        # Создаём новый лайк
-        new_like = Like(user_id=user_id, liked_user_id=liked_user_id, is_new=True)
-        db.session.add(new_like)
+    # Новый лайк
+    new_like = Like(user_id=user_id, liked_user_id=liked_user_id, is_new=True)
+    db.session.add(new_like)
 
-        # Проверяем наличие ответного лайка
-        reciprocal_like = Like.query.filter_by(user_id=liked_user_id, liked_user_id=user_id).first()
+    reciprocal_like = Like.query.filter_by(user_id=liked_user_id, liked_user_id=user_id).first()
+    match_created = False
 
-        if reciprocal_like:
-            existing_match = Matches.query.filter(
-                ((Matches.user_one_id == user_id) & (Matches.user_two_id == liked_user_id)) |
-                ((Matches.user_one_id == liked_user_id) & (Matches.user_two_id == user_id))
-            ).first()
+    if reciprocal_like:
+        existing_match = Matches.query.filter(
+            ((Matches.user_one_id == user_id) & (Matches.user_two_id == liked_user_id)) |
+            ((Matches.user_one_id == liked_user_id) & (Matches.user_two_id == user_id))
+        ).first()
+        if not existing_match:
+            match = Matches(
+                user_one_id=min(user_id, liked_user_id),
+                user_two_id=max(user_id, liked_user_id),
+                matched_ad=datetime.now(timezone.utc)
+            )
+            db.session.add(match)
+            match_created = True
 
-            if not existing_match:
-                match = Matches(
-                    user_one_id=user_id,
-                    user_two_id=liked_user_id,
-                    matched_ad=datetime.now(timezone.utc)  # дата совпадения
-                )
-                db.session.add(match)
+    db.session.commit()
 
-        db.session.commit()
-        if request.is_json:
-            return jsonify({"success": True, "message": "Лайк поставлен"})
-        flash("Вы поставили лайк!", "success")
+    if request.is_json:
+        return jsonify({
+            "success": True,
+            "message": "Взаимный лайк!" if match_created else "Лайк поставлен",
+            "match": match_created
+        })
 
+    flash("Вы поставили лайк!", "success")
     return redirect(request.referrer or url_for('basepage'))
+
+
+
 
 
 
@@ -938,6 +945,8 @@ def view_profile(id):
 @app.route('/block/<int:user_id>', methods=['POST'])
 def block_user(user_id):
     if 'user_id' not in session:
+        if request.is_json:
+            return jsonify({"success": False, "message": "Требуется авторизация"}), 401
         flash("Сначала войдите в аккаунт", "warning")
         return redirect(url_for('login'))
 
@@ -961,14 +970,19 @@ def block_user(user_id):
 
     if like:
         like.is_blocked = True
-        like.is_new = False  # на всякий случай
+        like.is_new = False
     else:
         like = Like(user_id=current_user_id, liked_user_id=user_id, is_blocked=True, is_new=False)
         db.session.add(like)
 
     db.session.commit()
+
+    if request.is_json:
+        return jsonify({"success": True, "message": "Пользователь заблокирован"})
+
     flash("Пользователь заблокирован.", "info")
     return redirect(url_for('view_profile', id=user_id))
+
 
 
 @csrf.exempt
