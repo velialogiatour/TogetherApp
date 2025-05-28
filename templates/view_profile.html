@@ -102,11 +102,13 @@
         </button>
       </form>
 
-      {% if mutual_like and not is_blocked %}
-      <a href="{{ url_for('chat', user_id=profile.user.id) }}" class="chat-button-img" title="Чат">
+      <a href="{{ url_for('chat', user_id=profile.user.id) }}"
+         id="chat-button"
+         class="chat-button-img"
+         title="Чат"
+         style="{% if not mutual_like or is_blocked %}display: none;{% endif %}">
         <img src="{{ url_for('static', filename='image/img_16.png') }}" alt="Чат">
       </a>
-      {% endif %}
     </div>
   </div>
 

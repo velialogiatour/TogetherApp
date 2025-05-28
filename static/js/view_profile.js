@@ -17,6 +17,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const likeForm = document.getElementById("like-form");
   const blockForm = document.getElementById("block-form");
   const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute("content");
+  const chatButton = document.getElementById("chat-button");
 
   const showToast = (message, type = "success") => {
     const container = document.getElementById("toast-container");
@@ -36,14 +37,22 @@ document.addEventListener("DOMContentLoaded", () => {
       const res = await fetch(url, {
         method: "POST",
         headers: {
+          "Content-Type": "application/json",
           "X-CSRFToken": csrfToken
-        }
+        },
+        body: JSON.stringify({})
       });
 
-      if (res.ok) {
-        showToast(successMessage);
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        showToast(data.message || successMessage);
+
+        if (data.match && chatButton) {
+          chatButton.style.display = "inline-block";
+        }
       } else {
-        showToast(errorMessage, "error");
+        showToast(data.message || errorMessage, "error");
       }
     } catch (err) {
       console.error("Ошибка сети:", err);
