@@ -107,7 +107,7 @@ label {
     }
 }
 
-/* Flash-сообщения (если будут использоваться) */
+/* Flash-сообщения */
 .flash {
     width: 90%;
     margin: 15px auto;
@@ -135,4 +135,43 @@ label {
         transform: translateY(-20px);
         visibility: hidden;
     }
+}
+
+/* Toast-уведомления */
+#toast-container {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9999;
+}
+
+.toast {
+    background-color: #2e2e2e;
+    color: #fff;
+    padding: 12px 20px;
+    margin-top: 10px;
+    border-radius: 20px;
+    font-size: 15px;
+    font-family: sans-serif;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+    opacity: 1;
+}
+
+.toast.success {
+    background-color: #28a745;
+}
+
+.toast.error {
+    background-color: #dc3545;
+}
+
+.toast.info {
+    background-color: #28a745;
+}
+
+.toast.warning {
+    background-color: #ffc107;
+    color: #000;
 }
