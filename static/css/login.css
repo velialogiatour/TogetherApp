@@ -1,6 +1,6 @@
 body {
     font-family: Arial, sans-serif;
-    background-color: #ffffff;
+    background-color: #f0f0f0;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -9,7 +9,7 @@ body {
 }
 
 .login-container {
-    background: #f0f0f0;
+    background: #ffffff;
     padding: 25px;
     border-radius: 20px;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
@@ -20,7 +20,7 @@ body {
 h2 {
     margin-bottom: 20px;
     font-size: 1.8em;
-    color: #333;
+    color: #040303;
 }
 
 label {
