@@ -16,6 +16,17 @@
     <div class="container">
         <h2>Регистрация</h2>
 
+        <!-- Уведомления -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div id="toast-container">
+              {% for category, message in messages %}
+                <div class="toast {{ category }}">{{ message }}</div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
         <!-- Блок для ошибок -->
         <div id="errorBox"></div>
 
