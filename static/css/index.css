@@ -7,7 +7,7 @@ body {
     justify-content: center;
     align-items: center;
     height: 90vh;
-    background-color: white;
+    background-color: rgba(228, 222, 222, 0.52);
 }
 .container {
     text-align: center;
@@ -17,7 +17,7 @@ h1 {
     margin-bottom: 40px;
 }
 .form-box {
-    background: rgba(228, 222, 222, 0.52);
+    background: rgb(255, 255, 255);
     box-shadow: 0 0 18px rgba(0, 0, 0, 0.1);
     padding: 40px;
     border-radius: 15px;
