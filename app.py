@@ -910,9 +910,13 @@ def delete_account():
     db.session.delete(user)
     db.session.commit()
 
+    # Полностью очищаем сессию
     session.clear()
+
+    # Сразу направляем на регистрацию и выводим уведомление
     flash("Аккаунт удалён", "info")
     return redirect(url_for('register'))
+
 
 
 
