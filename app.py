@@ -193,7 +193,6 @@ def forgot_pass():
     return render_template('forgot_pass.html', form=form)
 
 
-
 @app.route('/reset_password/<token>', methods=['GET', 'POST'])
 def reset_password(token):
     reset_token = PasswordResetToken.query.filter_by(token=token).first()
@@ -215,6 +214,7 @@ def reset_password(token):
         return redirect(url_for('login'))
 
     return render_template('reset_password.html', form=form)
+
 
 
 
