@@ -1,115 +1,166 @@
-let currentPage = 1;
-let isLoading = false;
-
 document.addEventListener("DOMContentLoaded", () => {
   const filterToggle = document.getElementById("filter-toggle");
   const filterPanel = document.getElementById("filter-panel");
+  const clearFiltersButton = document.getElementById("clear-filters");
+  const searchInput = document.getElementById("search-input");
+  const filterForm = document.querySelector(".filters");
+  const noProfiles = document.getElementById("no-profiles");
 
-  // Открытие/закрытие фильтра
+  // Переключение панели фильтра
   if (filterToggle && filterPanel) {
     filterToggle.addEventListener("click", (e) => {
       e.stopPropagation();
-      filterPanel.classList.toggle("hidden");
+      filterPanel.classList.toggle("open");
+      filterPanel.classList.remove("hidden");
     });
 
-    // Закрытие при клике вне панели
     document.addEventListener("click", (e) => {
-      if (!filterPanel.contains(e.target) && !filterToggle.contains(e.target)) {
+      const isClickInside = filterPanel.contains(e.target) || filterToggle.contains(e.target);
+      if (!isClickInside && filterPanel.classList.contains("open")) {
+        filterPanel.classList.remove("open");
         filterPanel.classList.add("hidden");
       }
     });
   }
 
-  // Прокрутка для автоподгрузки
-  window.addEventListener("scroll", handleScroll);
+  // Кнопка сброса фильтров
+  if (clearFiltersButton) {
+    clearFiltersButton.addEventListener("click", () => {
+      const url = new URL(window.location.origin + "/basepage");
 
-  // Запуск проверки непрочитанных
-  checkUnread();
-  setInterval(checkUnread, 20000);
-});
-
-function handleScroll() {
-  const scrollY = window.scrollY;
-  const visible = window.innerHeight;
-  const full = document.body.offsetHeight;
-
-  if (scrollY + visible >= full - 100) {
-    loadMoreProfiles();
-  }
-}
-
-function loadMoreProfiles() {
-  if (isLoading) return;
-  isLoading = true;
-  const loading = document.getElementById('loading');
-  loading.style.display = 'block';
-
-  const query = new URLSearchParams(window.location.search);
-  const nextPage = currentPage + 1;
-  query.set('page', nextPage);
-
-  fetch(`/basepage_data?${query.toString()}`)
-    .then(res => res.ok ? res.json() : [])
-    .then(data => {
-      if (data.length === 0) {
-        window.removeEventListener("scroll", handleScroll);
-        loading.textContent = "Анкеты закончились";
-        return;
+      if (searchInput) {
+        searchInput.value = "";
       }
 
-      const container = document.querySelector(".cards-container");
-      data.forEach(profile => {
-        const card = document.createElement("a");
-        card.href = `/view_profile/${profile.id}`;
-        card.className = "profile-card";
-        card.innerHTML = `
-          <img src="${profile.profile_photo}" alt="Фото" class="profile-photo" />
-          <div class="profile-info">
-            <h3>${profile.name}, ${profile.age}</h3>
-            <p>${profile.city}, ${profile.country}</p>
-            <p>Знак: ${profile.zodiac_sign}</p>
-          </div>`;
-        container.appendChild(card);
-      });
+      if (filterForm) {
+        filterForm.reset();
+      }
 
-      currentPage++;
-    })
-    .catch(err => console.error("Ошибка загрузки:", err))
-    .finally(() => {
-      isLoading = false;
-      loading.style.display = "none";
+      history.replaceState({}, "", url.toString());
+      loadProfiles();
     });
-}
+  }
 
-// 🔴 Подсветка новых лайков и сообщений
-function checkUnread() {
-  fetch('/api/unread_counts')
-    .then(res => res.json())
-    .then(data => {
-      const likesIcon = document.getElementById('likes-icon');
-      const likesIndicator = document.getElementById('likes-indicator');
-      const messagesIcon = document.getElementById('messages-icon');
-      const messagesIndicator = document.getElementById('messages-indicator');
+  // Поиск по слову (автоматически)
+  if (searchInput) {
+    let debounceTimer;
+    searchInput.addEventListener("input", () => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        const query = searchInput.value.trim();
+        const url = new URL(window.location.origin + "/basepage_data");
+        if (query) url.searchParams.set("query", query);
 
-      if (likesIcon && likesIndicator) {
-        if (data.likes > 0) {
-          likesIcon.classList.add('has-new');
-          likesIndicator.style.display = 'inline-block';
-        } else {
-          likesIcon.classList.remove('has-new');
-          likesIndicator.style.display = 'none';
+        history.replaceState({}, "", "/basepage?" + url.searchParams.toString());
+        fetchProfiles(url);
+      }, 400);
+    });
+  }
+
+  // Сабмит фильтра без перезагрузки + сброс полей
+  if (filterForm) {
+    filterForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const formData = new FormData(filterForm);
+      const url = new URL(window.location.origin + "/basepage_data");
+
+      for (const [key, value] of formData.entries()) {
+        if (value && value.trim() !== "") {
+          url.searchParams.set(key, value.trim());
         }
       }
 
-      if (messagesIcon && messagesIndicator) {
-        if (data.messages > 0) {
-          messagesIcon.classList.add('has-new');
-          messagesIndicator.style.display = 'inline-block';
-        } else {
-          messagesIcon.classList.remove('has-new');
-          messagesIndicator.style.display = 'none';
+      history.replaceState({}, "", "/basepage?" + url.searchParams.toString());
+      fetchProfiles(url);
+
+      filterForm.reset();
+    });
+  }
+
+  // Загрузка анкет
+  function fetchProfiles(url) {
+    fetch(url)
+      .then((res) => res.json())
+      .then((data) => {
+        let container = document.querySelector(".cards-container");
+
+        if (!container) {
+          container = document.createElement("div");
+          container.className = "cards-container";
+          document.body.appendChild(container);
         }
-      }
-    })
-    .catch(err => console.error("Ошибка получения уведомлений:", err));
-}
+
+        container.innerHTML = "";
+
+        const results = data.profiles || data;
+
+        if (data.empty || results.length === 0) {
+          noProfiles.classList.add("visible");
+        } else {
+          noProfiles.classList.remove("visible");
+
+          results.forEach((profile) => {
+            const card = document.createElement("a");
+            card.className = "profile-card";
+            card.href = `/view_profile/${profile.id}`;
+
+            const matchBlock = (profile.match_probability && profile.match_probability > 0)
+              ? `<p class="match-probability"><span class="label">Совпадение:</span> ${profile.match_probability}%</p>`
+              : "";
+
+            card.innerHTML = `
+              <img src="${profile.profile_photo}" alt="Фото" class="profile-photo" />
+              <div class="profile-info">
+                <h3>${profile.name}, ${profile.age}</h3>
+                <p>${profile.city}, ${profile.country}</p>
+                <p>Знак: ${profile.zodiac_sign}</p>
+                ${matchBlock}
+              </div>
+            `;
+            container.appendChild(card);
+          });
+        }
+      })
+      .catch((err) => {
+        console.error("Ошибка загрузки анкет:", err);
+      });
+  }
+
+  function loadProfiles() {
+    const url = new URL(window.location.origin + "/basepage_data");
+    fetchProfiles(url);
+  }
+
+  // Проверка количества непрочитанных лайков и сообщений
+  function checkUnreadCounts() {
+    fetch("/api/unread_counts")
+      .then((res) => res.json())
+      .then((data) => {
+        const likesIndicator = document.getElementById("likes-indicator");
+        const messagesIndicator = document.getElementById("messages-indicator");
+
+        if (data.likes > 0 && likesIndicator) {
+          likesIndicator.classList.add("visible");
+        } else if (likesIndicator) {
+          likesIndicator.classList.remove("visible");
+        }
+
+        if (data.messages > 0 && messagesIndicator) {
+          messagesIndicator.classList.add("visible");
+        } else if (messagesIndicator) {
+          messagesIndicator.classList.remove("visible");
+        }
+      })
+      .catch((err) => {
+        console.error("Ошибка получения количества уведомлений:", err);
+      });
+  }
+
+  // Загрузка анкет при первом открытии
+  if (!document.querySelector(".profile-card")) {
+    loadProfiles();
+  }
+
+  // Проверка индикаторов
+  checkUnreadCounts();
+});
