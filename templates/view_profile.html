@@ -11,7 +11,7 @@
 
   <!-- Стрелка назад -->
   <div class="back-button">
-    <a href="{{ url_for('basepage') }}">&#8592;</a>
+    <a href="{{ return_to | default(url_for('basepage')) }}">&#8592;</a>
   </div>
 
   <div id="toast-container"></div>

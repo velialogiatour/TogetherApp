@@ -85,4 +85,21 @@ document.addEventListener("DOMContentLoaded", () => {
       closePhoto();
     }
   });
+
+  // ⏱ Периодическая проверка на взаимный лайк
+  const checkMutualLike = () => {
+    const viewedUserId = likeForm?.dataset.userId;
+    if (!viewedUserId || !chatButton || chatButton.style.display !== "none") return;
+
+    fetch(`/check_match/${viewedUserId}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.match) {
+          chatButton.style.display = "inline-block";
+        }
+      })
+      .catch(err => console.error("Ошибка при проверке мэтча:", err));
+  };
+
+  setInterval(checkMutualLike, 2000);
 });
