@@ -9,7 +9,6 @@
 </head>
 <body>
 
-  <!-- FLASH-сообщения -->
   {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
       <div class="flash-container">
@@ -20,20 +19,18 @@
     {% endif %}
   {% endwith %}
 
-  <!-- Поисковая строка -->
-  <form class="search-bar" method="get" action="/basepage">
+  <div class="search-bar">
     <div class="search-wrapper">
-      <input type="text" name="query" placeholder="Поиск" aria-label="Поиск" />
+      <input type="text" name="query" id="search-input" placeholder="Поиск" aria-label="Поиск" autocomplete="off" />
       <button type="button" id="filter-toggle" class="inline-filter-button" aria-label="Фильтр">
-        <img src="../static/image/img.png" alt="" />
+        <img src="../static/image/img.png" alt="Фильтр" />
       </button>
     </div>
-    <button type="submit" class="icon-button" aria-label="Поиск">
-      <img src="../static/image/img_1.png" alt="Поиск" />
+    <button type="button" id="clear-filters" class="reset-button" aria-label="Сброс фильтра">
+      <img src="../static/image/img_22.png" alt="Сброс фильтра" />
     </button>
-  </form>
+  </div>
 
-  <!-- Панель фильтров -->
   <div id="filter-panel" class="filter-panel hidden">
     <form class="filters" method="get" action="/basepage">
       <input type="hidden" name="query" value="{{ request.args.get('query', '') }}" />
@@ -56,44 +53,27 @@
     </form>
   </div>
 
-  <!-- Карточки анкет -->
-  <div class="cards-container">
-    {% if profiles|length == 0 %}
-      <p class="no-profiles-msg">Пока что никто не создал анкет.</p>
-    {% else %}
-      {% for profile in profiles %}
-        <a href="{{ url_for('view_profile', id=profile.questionnaire_id) }}" class="profile-card">
-          <img src="{{ profile.profile_photo }}" alt="Фото" class="profile-photo" />
-          <div class="profile-info">
-            <h3>{{ profile.user.name }}, {{ profile.age }}</h3>
-            <p>{{ profile.city }}, {{ profile.country }}</p>
-            <p>Знак: {{ profile.zodiac_sign }}</p>
-            {% if profile.match_probability is defined %}
-              <p class="match-probability">Совпадение: {{ profile.match_probability }}%</p>
-            {% endif %}
-          </div>
-        </a>
-      {% endfor %}
-    {% endif %}
+  <!-- Сюда подгружаются анкеты -->
+  <div class="cards-container"></div>
+
+  <!-- Сообщение, если анкет нет -->
+  <div class="no-profiles-wrapper" id="no-profiles">
+    <div class="no-profiles-msg">По вашему запросу ничего не найдено.</div>
   </div>
 
-  <!-- Нижняя навигация с индикаторами -->
+  <!-- Нижнее меню -->
   <nav class="bottom-nav">
-    <a href="/user_profile"><img src="../static/image/img_2.png" alt="" /></a>
-
+    <a href="/user_profile"><img src="../static/image/img_2.png" alt="Профиль" /></a>
     <a href="/chats" id="messages-icon" class="menu-icon">
       <img src="../static/image/img_6.png" alt="Сообщения" />
       <span class="indicator" id="messages-indicator"></span>
     </a>
-
     <a href="/likes" id="likes-icon" class="menu-icon">
       <img src="../static/image/img_5.png" alt="Лайки" />
       <span class="indicator" id="likes-indicator"></span>
     </a>
   </nav>
 
-  <!-- Авто-исчезновение флешей -->
   <script src="{{ url_for('static', filename='js/flash.js') }}"></script>
-
 </body>
 </html>

@@ -30,31 +30,36 @@ body {
   background-color: #dc3545;
 }
 
-/* Поисковая строка */
+/* Поисковая строка и кнопки */
 .search-bar {
   display: flex;
-  gap: 10px;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
   padding: 15px;
   background: #fff;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-  justify-content: center;
   flex-wrap: wrap;
+  position: relative;
+  z-index: 2;
 }
 
 .search-wrapper {
   position: relative;
   display: flex;
   align-items: center;
+  z-index: 2;
 }
 
 .search-wrapper input[type="text"] {
-  padding: 10px 40px 10px 10px;
+  padding: 10px 40px 10px 12px;
   width: 280px;
   border-radius: 10px;
   border: 1px solid #ccc;
   font-size: 15px;
 }
 
+/* Кнопка фильтра (в строке поиска) */
 .inline-filter-button {
   position: absolute;
   right: 8px;
@@ -64,6 +69,7 @@ body {
   border: none;
   cursor: pointer;
   padding: 0;
+  z-index: 3;
 }
 
 .inline-filter-button img {
@@ -77,35 +83,46 @@ body {
   opacity: 1;
 }
 
-.icon-button {
+/* Кнопка сброса фильтров */
+.reset-button {
   background: transparent;
   border: none;
-  padding: 0;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
+  z-index: 2;
 }
 
-.icon-button img {
+.reset-button img {
   width: 24px;
   height: 24px;
-  opacity: 0.8;
+  object-fit: contain;
+  opacity: 0.7;
   transition: opacity 0.2s;
 }
 
-.icon-button:hover img {
+.reset-button:hover img {
   opacity: 1;
 }
 
 /* Панель фильтров */
 .filter-panel {
+  display: none;
   background-color: #fafafa;
   padding: 20px 10px;
   border-bottom: 1px solid #ddd;
-  display: none;
 }
 
-.filter-panel:not(.hidden) {
-  display: flex;
+.filter-panel.open {
+  display: flex !important;
   justify-content: center;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.hidden {
+  display: none !important;
 }
 
 .filters {
@@ -135,23 +152,28 @@ body {
   margin-top: 10px;
 }
 
-/* Кнопка фильтра (иконка) */
+/* Кнопка применения фильтра */
 .filter-btn-img {
   background: transparent;
   border: none;
-  cursor: pointer;
   padding: 0;
-  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
 }
 
 .filter-btn-img img {
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
   opacity: 0.8;
   transition: opacity 0.2s;
 }
 
-.filter-btn-img img:hover {
+.filter-btn-img:hover img {
   opacity: 1;
 }
 
@@ -206,13 +228,27 @@ body {
   color: #666;
 }
 
-/* Сообщение, если анкет нет */
-.no-profiles-msg {
-  grid-column: 1 / -1;
+/* Блок если анкет нет */
+.no-profiles-wrapper {
+  display: none; /* скрыт по умолчанию */
+  justify-content: center;
+  align-items: center;
+  padding: 40px 20px;
+  width: 100%;
   text-align: center;
-  font-size: 18px;
+}
+
+.no-profiles-wrapper.visible {
+  display: flex;
+}
+
+.no-profiles-msg {
+  font-size: 20px;
   color: #777;
-  padding: 60px 0;
+  background-color: #f8d7da;
+  padding: 16px 24px;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
 }
 
 /* Индикатор загрузки */
@@ -256,10 +292,27 @@ body {
   background-color: red;
   border-radius: 50%;
 }
+
+.indicator.visible {
+  display: block;
+}
+
 /* Совпадение: процент мэтча */
 .match-probability {
   margin-top: 6px;
   font-size: 14px;
   font-weight: 600;
-  color: #F0705A; /* акцентный тёплый цвет, как в других местах */
+  color: #F0705A;
+}
+
+/* Анимация */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.match-probability .label {
+  font-weight: normal;
+  color: #888;
+  margin-right: 4px;
 }
