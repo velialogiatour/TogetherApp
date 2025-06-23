@@ -6,7 +6,7 @@ import logging
 from flask import Flask, render_template, redirect, url_for, flash, session, request, jsonify
 from flask_mail import Message, Mail
 from flask_wtf import CSRFProtect
-from sqlalchemy import or_
+from sqlalchemy import or_, and_
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 
@@ -217,14 +217,6 @@ def reset_password(token):
 
 
 
-
-# @app.route('/test_reset_password')
-# def test_reset_password():
-#     from forms import ResetPasswordForm
-#     form = ResetPasswordForm()
-#     return render_template('reset_password.html', form=form)
-
-
 @app.route('/questionary', methods=['GET', 'POST'])
 def questionary():
     if 'user_id' not in session:
@@ -424,7 +416,7 @@ def basepage_data():
 
     user_id = session['user_id']
 
-    # 🔒 Получаем ID заблокированных и блокирующих
+    # 🔒 Заблокированные
     blocked_ids_query = db.session.query(Like.liked_user_id).filter(
         Like.user_id == user_id, Like.is_blocked == True
     ).union(
@@ -434,80 +426,87 @@ def basepage_data():
     )
     blocked_ids = [id for (id,) in blocked_ids_query.all()]
 
-    # 🧩 И ID совпадений (если нужно исключать matched)
+    # 🔁 Совпавшие
     matched_ids = get_matched_user_ids(user_id)
 
-    # 🧠 Основной запрос
+    # 🔍 Фильтр анкет
     query = Questionnaire.query.filter(
         Questionnaire.user_id != user_id,
         ~Questionnaire.user_id.in_(matched_ids),
-        ~Questionnaire.user_id.in_(blocked_ids)  # ❗ исключаем блокированных
+        ~Questionnaire.user_id.in_(blocked_ids)
     )
 
-    # Поиск
     keyword = request.args.get('query', '').strip().lower()
     if keyword:
         query = query.filter(
             or_(
                 Questionnaire.interests.ilike(f'%{keyword}%'),
                 Questionnaire.description.ilike(f'%{keyword}%'),
-                Questionnaire.city.ilike(f'%{keyword}%')
+                Questionnaire.city.ilike(f'%{keyword}%'),
+                Questionnaire.country.ilike(f'%{keyword}%'),
+                Questionnaire.zodiac_sign.ilike(f'%{keyword}%')
             )
         )
 
-    # Фильтры
-    gender = request.args.get('gender')
-    if gender:
+    if gender := request.args.get('gender'):
         query = query.filter_by(gender=gender)
 
-    age_from = request.args.get('ageFrom', type=int)
-    age_to = request.args.get('ageTo', type=int)
-    if age_from:
+    if age_from := request.args.get('ageFrom', type=int):
         query = query.filter(Questionnaire.age >= age_from)
-    if age_to:
+    if age_to := request.args.get('ageTo', type=int):
         query = query.filter(Questionnaire.age <= age_to)
 
-    country = request.args.get('country', '').strip()
-    if country:
+    if country := request.args.get('country', '').strip():
         query = query.filter(Questionnaire.country.ilike(f'%{country}%'))
 
-    city = request.args.get('city', '').strip()
-    if city:
+    if city := request.args.get('city', '').strip():
         query = query.filter(Questionnaire.city.ilike(f'%{city}%'))
 
-    height_from = request.args.get('heightFrom', type=int)
-    height_to = request.args.get('heightTo', type=int)
-    if height_from:
+    if height_from := request.args.get('heightFrom', type=int):
         query = query.filter(Questionnaire.height >= height_from)
-    if height_to:
+    if height_to := request.args.get('heightTo', type=int):
         query = query.filter(Questionnaire.height <= height_to)
 
-    zodiac = request.args.get('zodiac_sign', '').strip()
-    if zodiac:
+    if zodiac := request.args.get('zodiac_sign', '').strip():
         query = query.filter(Questionnaire.zodiac_sign.ilike(f'%{zodiac}%'))
 
-    interests = request.args.get('interests', '').strip()
-    if interests:
+    if interests := request.args.get('interests', '').strip():
         query = query.filter(Questionnaire.interests.ilike(f'%{interests}%'))
 
-    # Пагинация
-    page = request.args.get('page', 1, type=int)
-    per_page = 10
-    paginated = query.paginate(page=page, per_page=per_page, error_out=False)
+    # 🧠 Мэтчинг
+    my_questionnaire = Questionnaire.query.filter_by(user_id=user_id).first()
+    def to_dict(q):
+        return {
+            'age': q.age,
+            'gender': q.gender,
+            'country': q.country,
+            'city': q.city,
+            'height': q.height,
+            'zodiac_sign': q.zodiac_sign,
+            'interests': q.interests
+        }
+
+    my_dict = to_dict(my_questionnaire)
 
     results = []
-    for profile in paginated.items:
+    for profile in query.all():  # ❗ Без пагинации — загружаем все
+        other_dict = to_dict(profile)
+        score = predict_match(my_dict, other_dict)
+        match_percent = round(score * 100)
         results.append({
-            "id": profile.id,
+            "id": profile.user_id,
             "name": profile.user.name,
             "age": profile.age,
             "city": profile.city,
             "country": profile.country,
             "zodiac_sign": profile.zodiac_sign,
-            "profile_photo": profile.profile_photo
+            "profile_photo": profile.profile_photo,
+            "match_probability": match_percent
         })
 
-    return jsonify(results)
+    if not results:
+        return jsonify({'empty': True})
+    return jsonify({'profiles': results})
 
 
 
@@ -609,9 +608,6 @@ def like_user(liked_user_id):
 
 
 
-
-
-
 @app.route('/likes')
 def likes_page():
     if 'user_id' not in session:
@@ -641,7 +637,7 @@ def likes_page():
         liked_users=liked_users,
         users_who_liked_me=users_who_liked_me,
         matches=matches,
-        new_likes_exist=new_likes_exist  # ⬅️ передаём флаг в шаблон
+        new_likes_exist=new_likes_exist
     )
 
 
@@ -920,6 +916,8 @@ def delete_account():
 
 
 
+from flask import request, redirect, url_for, session, render_template, flash
+
 @app.route('/view_profile/<int:id>')
 def view_profile(id):
     if 'user_id' not in session:
@@ -943,7 +941,16 @@ def view_profile(id):
     like_from_them = Like.query.filter_by(user_id=profile.user_id, liked_user_id=current_user_id).first()
     mutual_like = like_from_me and like_from_them
 
-    return render_template('view_profile.html', profile=profile, mutual_like=mutual_like)
+    # Новый блок — поддержка return_to (возврат на чат или basepage)
+    return_to = request.args.get("return_to", url_for('basepage'))
+
+    return render_template(
+        'view_profile.html',
+        profile=profile,
+        mutual_like=mutual_like,
+        return_to=return_to
+    )
+
 
 
 @app.route('/block/<int:user_id>', methods=['POST'])
@@ -989,6 +996,19 @@ def block_user(user_id):
 
 
 
+@app.route('/check_match/<int:other_user_id>')
+def check_match(other_user_id):
+    if 'user_id' not in session:
+        return jsonify({'match': False})
+
+    user_id = session['user_id']
+    match = Matches.query.filter_by(user_one_id=user_id, user_two_id=other_user_id).first() \
+         or Matches.query.filter_by(user_one_id=other_user_id, user_two_id=user_id).first()
+
+    return jsonify({'match': bool(match)})
+
+
+
 @csrf.exempt
 @app.route('/unblock/<int:user_id>', methods=['POST'])
 def unblock_user(user_id):
@@ -1003,11 +1023,11 @@ def unblock_user(user_id):
     if like and like.is_blocked:
         db.session.delete(like)  # полностью удаляем лайк с флагом блокировки
         db.session.commit()
-        flash("Пользователь разблокирован и удалён из лайков.", "info")
+        flash("Пользователь разблокирован", "info")
     else:
         flash("Этот пользователь не был заблокирован.", "warning")
 
-    return redirect(url_for('user_profile'))
+    return redirect(url_for('blacklist'))
 
 
 
