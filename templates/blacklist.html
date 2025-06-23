@@ -15,6 +15,17 @@
     <h1>Чёрный список</h1>
   </header>
 
+  <!-- Flash сообщения -->
+  <div class="toast-container" id="toastContainer">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="toast {{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+  </div>
+
   <main class="container">
     {% if blocked_users %}
       <ul class="blocked-list">
@@ -28,9 +39,9 @@
               <span class="name">{{ user.name }}</span>
             </div>
             <form method="POST" action="{{ url_for('unblock_user', user_id=user.id) }}">
-  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-  <button type="submit" class="unblock-btn">Разблокировать</button>
-</form>
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="unblock-btn">Разблокировать</button>
+            </form>
           </li>
         {% endfor %}
       </ul>
@@ -38,6 +49,16 @@
       <p class="empty-msg">Вы никого не заблокировали.</p>
     {% endif %}
   </main>
+
+  <!-- Скрипт для автоудаления уведомления -->
+  <script>
+    setTimeout(() => {
+      const toast = document.querySelector('.toast');
+      if (toast) {
+        toast.remove();
+      }
+    }, 3000);
+  </script>
 
 </body>
 </html>
