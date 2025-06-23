@@ -62,12 +62,11 @@ document.addEventListener("DOMContentLoaded", function () {
   const modalClose = document.querySelector(".modal-close");
 
   document.querySelectorAll(".previewable").forEach(img => {
-  img.addEventListener("click", () => {
-    modalImg.src = img.getAttribute("data-full") || img.src;
-    modal.style.display = "block";
+    img.addEventListener("click", () => {
+      modalImg.src = img.getAttribute("data-full") || img.src;
+      modal.style.display = "block";
+    });
   });
-});
-
 
   modalClose.addEventListener("click", () => {
     modal.style.display = "none";
@@ -78,8 +77,18 @@ document.addEventListener("DOMContentLoaded", function () {
       modal.style.display = "none";
     }
   });
+
+  // Автоматическое скрытие уведомлений .toast
+  const toast = document.querySelector(".toast");
+  if (toast) {
+    setTimeout(() => {
+      toast.style.opacity = "0";
+      setTimeout(() => toast.remove(), 500);
+    }, 3000);
+  }
 });
 
+// Подтверждение удаления аккаунта
 document.addEventListener("DOMContentLoaded", () => {
   const deleteLink = document.querySelector('a[href*="delete_account"]');
   const modal = document.getElementById("confirmModal");

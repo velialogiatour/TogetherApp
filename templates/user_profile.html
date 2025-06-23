@@ -26,6 +26,17 @@
     </div>
   </div>
 
+  <!-- Flash-сообщения -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="toast-container">
+        {% for category, message in messages %}
+          <div class="toast {{ category }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
   <div class="profile-container">
     <!-- Аватар -->
     <div class="avatar-section">
@@ -36,15 +47,14 @@
     </div>
 
     <!-- Дополнительное фото -->
-<div class="photos-section">
-  {% if user.questionnaire.additional_photo %}
-    <img src="{{ url_for('static', filename=user.questionnaire.additional_photo.split('static/')[-1].replace('\\', '/')) }}"
-         class="additional-photo previewable"
-         alt="Дополнительное фото"
-         data-full="{{ url_for('static', filename=user.questionnaire.additional_photo.split('static/')[-1].replace('\\', '/')) }}">
-  {% endif %}
-</div>
-
+    <div class="photos-section">
+      {% if user.questionnaire.additional_photo %}
+        <img src="{{ url_for('static', filename=user.questionnaire.additional_photo.split('static/')[-1].replace('\\', '/')) }}"
+             class="additional-photo previewable"
+             alt="Дополнительное фото"
+             data-full="{{ url_for('static', filename=user.questionnaire.additional_photo.split('static/')[-1].replace('\\', '/')) }}">
+      {% endif %}
+    </div>
 
     <!-- Анкета -->
     <form id="profileForm" class="profile-form" method="POST" enctype="multipart/form-data">
