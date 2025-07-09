@@ -5,6 +5,7 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  padding-top: 0 !important;
 }
 
 /* FLASH-сообщения */
@@ -40,8 +41,9 @@ body {
   background: #fff;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
   flex-wrap: wrap;
-  position: relative;
-  z-index: 2;
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
 .search-wrapper {
@@ -59,7 +61,7 @@ body {
   font-size: 15px;
 }
 
-/* Кнопка фильтра (в строке поиска) */
+/* Кнопка фильтра */
 .inline-filter-button {
   position: absolute;
   right: 8px;
@@ -182,7 +184,7 @@ body {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   gap: 20px;
-  padding: 20px;
+  padding: 20px 20px 100px;
   width: 100%;
   max-width: 1200px;
   margin: 0 auto;
@@ -233,9 +235,13 @@ body {
   display: none; /* скрыт по умолчанию */
   justify-content: center;
   align-items: center;
-  padding: 40px 20px;
+  position: absolute;
+  top: 50%;
+  left: 0;
   width: 100%;
+  transform: translateY(-50%);
   text-align: center;
+  z-index: 0;
 }
 
 .no-profiles-wrapper.visible {
@@ -270,6 +276,7 @@ body {
   justify-content: space-around;
   padding: 20px 0;
   box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
+  z-index: 10;
 }
 
 .bottom-nav img {
@@ -277,7 +284,7 @@ body {
   height: 36px;
 }
 
-/* 🔴 Индикаторы непрочитанных событий */
+/* Индикаторы */
 .menu-icon {
   position: relative;
 }
@@ -297,12 +304,18 @@ body {
   display: block;
 }
 
-/* Совпадение: процент мэтча */
+/* Совпадение */
 .match-probability {
   margin-top: 6px;
   font-size: 14px;
   font-weight: 600;
   color: #F0705A;
+}
+
+.match-probability .label {
+  font-weight: normal;
+  color: #888;
+  margin-right: 4px;
 }
 
 /* Анимация */
@@ -311,8 +324,31 @@ body {
   to { opacity: 1; transform: translateY(0); }
 }
 
-.match-probability .label {
-  font-weight: normal;
-  color: #888;
-  margin-right: 4px;
+.flash-container {
+  position: fixed;
+  top: 15px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.flash {
+  padding: 12px 24px;
+  border-radius: 20px;
+  font-size: 15px;
+  font-weight: 500;
+  color: #fff;
+  background-color: #28a745;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  opacity: 1;
+  transition: opacity 0.5s ease, transform 0.5s ease;
+  pointer-events: auto;
+}
+
+.flash.error,
+.flash.danger {
+  background-color: #dc3545;
 }
