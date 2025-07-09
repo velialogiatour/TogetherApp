@@ -475,6 +475,7 @@ def basepage_data():
 
     # 🧠 Мэтчинг
     my_questionnaire = Questionnaire.query.filter_by(user_id=user_id).first()
+
     def to_dict(q):
         return {
             'age': q.age,
@@ -506,7 +507,12 @@ def basepage_data():
 
     if not results:
         return jsonify({'empty': True})
+
+    # 📊 Сортировка по убыванию процента совпадения
+    results.sort(key=lambda x: x['match_probability'], reverse=True)
+
     return jsonify({'profiles': results})
+
 
 
 
@@ -679,15 +685,17 @@ def chat(user_id):
 
     current_user_id = session['user_id']
 
-    #Проверка блокировки между пользователями (в обе стороны)
+    # Проверка блокировки
     is_blocked = Like.query.filter(
         ((Like.user_id == current_user_id) & (Like.liked_user_id == user_id) & (Like.is_blocked == True)) |
         ((Like.user_id == user_id) & (Like.liked_user_id == current_user_id) & (Like.is_blocked == True))
     ).first()
 
+    other_user = db.session.get(User, user_id)
+
     if is_blocked:
         flash("Вы не можете переписываться с этим пользователем.", "danger")
-        return redirect(url_for('chats'))
+        return render_template("chat.html", other_user=other_user, is_blocked=True)
 
     # Отметить входящие сообщения как прочитанные
     unread_messages = Messages.query.filter_by(sender_id=user_id, receiver_id=current_user_id, is_read=False).all()
@@ -695,8 +703,9 @@ def chat(user_id):
         msg.is_read = True
     db.session.commit()
 
-    other_user = db.session.get(User, user_id)
-    return render_template("chat.html", other_user=other_user)
+    return render_template("chat.html", other_user=other_user, is_blocked=False)
+
+
 
 
 
