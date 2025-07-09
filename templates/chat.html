@@ -15,6 +15,17 @@
     <a href="{{ url_for('chats') }}">&#8592;</a>
   </div>
 
+  <!-- Flash-сообщения -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="flash-container">
+        {% for category, message in messages %}
+          <div class="flash {{ category }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
   <div class="chat-container">
     <!-- Верхняя панель с фото и именем -->
     <div class="chat-header">
@@ -44,16 +55,22 @@
     <div id="errorBox"></div>
 
     <!-- Форма отправки -->
-    <form class="input-area" id="messageForm" autocomplete="off">
-      {% if other_user %}
-        <input type="hidden" id="receiver_id" value="{{ other_user.id }}">
-      {% endif %}
-      <label for="messageInput" class="visually-hidden">Сообщение</label>
-      <input type="text" id="messageInput" placeholder="Введите сообщение..." required />
-      <button type="submit" class="send-button" aria-label="Отправить">
-        <img src="{{ url_for('static', filename='image/img_17.png') }}" alt="Отправить" />
-      </button>
-    </form>
+    {% if not is_blocked %}
+      <form class="input-area" id="messageForm" autocomplete="off">
+        {% if other_user %}
+          <input type="hidden" id="receiver_id" value="{{ other_user.id }}">
+        {% endif %}
+        <label for="messageInput" class="visually-hidden">Сообщение</label>
+        <input type="text" id="messageInput" placeholder="Введите сообщение..." required />
+        <button type="submit" class="send-button" aria-label="Отправить">
+          <img src="{{ url_for('static', filename='image/img_17.png') }}" alt="Отправить" />
+        </button>
+      </form>
+    {% else %}
+      <div style="text-align: center; color: red; font-weight: 500; margin-top: 10px;">
+        Сообщения между вами недоступны
+      </div>
+    {% endif %}
   </div>
 
   <script src="{{ url_for('static', filename='js/chat.js') }}"></script>
