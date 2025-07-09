@@ -51,40 +51,53 @@ function fetchMessages() {
     });
 }
 
-form.addEventListener('submit', function (e) {
-  e.preventDefault();
-  const content = input.value.trim();
+if (form) {
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    const content = input.value.trim();
 
-  if (!receiverId || isNaN(receiverId) || receiverId <= 0) {
-    errorBox.textContent = 'Ошибка: получатель не определён.';
-    return;
-  }
+    if (!receiverId || isNaN(receiverId) || receiverId <= 0) {
+      errorBox.textContent = 'Ошибка: получатель не определён.';
+      return;
+    }
 
-  if (!content) return;
+    if (!content) return;
 
-  const formData = new FormData();
-  formData.append('receiver_id', receiverId);
-  formData.append('message', content);
+    const formData = new FormData();
+    formData.append('receiver_id', receiverId);
+    formData.append('message', content);
 
-  fetch('/send_message', {
-    method: 'POST',
-    body: formData
-  })
-    .then(res => res.json())
-    .then(data => {
-      if (data.success) {
-        input.value = '';
-        errorBox.textContent = '';
-        fetchMessages();
-      } else {
-        errorBox.textContent = data.error || 'Ошибка при отправке';
-      }
+    fetch('/send_message', {
+      method: 'POST',
+      body: formData
     })
-    .catch(err => {
-      console.error("Ошибка сети:", err);
-      errorBox.textContent = "Ошибка сети. Попробуйте снова.";
-    });
-});
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          input.value = '';
+          errorBox.textContent = '';
+          fetchMessages();
+        } else {
+          errorBox.textContent = data.error || 'Ошибка при отправке';
+        }
+      })
+      .catch(err => {
+        console.error("Ошибка сети:", err);
+        errorBox.textContent = "Ошибка сети. Попробуйте снова.";
+      });
+  });
+}
 
+// Автообновление сообщений
 setInterval(fetchMessages, 3000);
 fetchMessages();
+
+// 🔔 Автоматическое скрытие flash-сообщений
+const flash = document.querySelector('.flash');
+if (flash) {
+  setTimeout(() => {
+    flash.style.opacity = '0';
+    flash.style.transform = 'translateY(-10px)';
+    setTimeout(() => flash.remove(), 500);
+  }, 3000);
+}
